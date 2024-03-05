@@ -1,0 +1,47 @@
+# MacOS
+.DS_Store
+
+# Linux – Exclude Dolphin files (KDE File manager)
+.directory
+
+# IDEA
+.idea/**
+# but keep VCS settings
+!.idea/vcs.xml
+# Gradle with auto-import
+*.iml
+*.ipr
+
+# Properties
+project.properties
+local.properties
+
+# Android Studio Layout Inspector
+/captures/**
+
+# Gradle
+.gradle
+build
+
+# Gradle Profiler
+/gradle-user-home/*
+
+# Crashlytics
+**/res/values/com_crashlytics_export_strings.xml
+**/crashlytics-build.properties
+
+# Misc
+Manifest.java
+R.java
+
+/bak
+/out
+*/out
+/gen
+/bin
+/true
+*/gen/*
+*/tmp/*
+*/builds/*
+*/classes/*
+**/gen/**
