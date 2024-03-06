@@ -1,6 +1,6 @@
 package com.example.musicplayerapp.player
 
-import com.example.musicplayerapp.domain.models.TrackModel
+import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
 
 interface MusicPlayerInterface {
 
@@ -20,11 +20,11 @@ interface MusicPlayerInterface {
     fun onNextClick()
 
     /**
-     * Invoked when a track is clicked. The clicked [Track] is provided as a parameter.
+     * Invoked when a track is clicked. The clicked [TrackState] is provided as a parameter.
      *
      * @param track The track that was clicked.
      */
-    fun onTrackClick(track: TrackModel)
+    fun onTrackClick(track: TrackState)
 
     /**
      * Invoked when the position of the seek bar has changed. The new position is provided as a parameter.
