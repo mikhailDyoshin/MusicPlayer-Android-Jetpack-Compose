@@ -12,7 +12,7 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     /**
      * A state flow that emits the current playback state of the player.
      */
-    val playerState = MutableStateFlow(PlayerStates.STATE_IDLE)
+    val playerState = MutableStateFlow(PlayerState.STATE_IDLE)
 
     /**
      * The current playback position in milliseconds. If the player's position
@@ -83,7 +83,7 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
      */
     override fun onPlayerError(error: PlaybackException) {
         super.onPlayerError(error)
-        playerState.tryEmit(PlayerStates.STATE_ERROR)
+        playerState.tryEmit(PlayerState.STATE_ERROR)
     }
 
     /**
@@ -94,9 +94,9 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
         if (player.playbackState == Player.STATE_READY) {
             if (playWhenReady) {
-                playerState.tryEmit(PlayerStates.STATE_PLAYING)
+                playerState.tryEmit(PlayerState.STATE_PLAYING)
             } else {
-                playerState.tryEmit(PlayerStates.STATE_PAUSE)
+                playerState.tryEmit(PlayerState.STATE_PAUSE)
             }
         }
     }
@@ -109,8 +109,8 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         super.onMediaItemTransition(mediaItem, reason)
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
-            playerState.tryEmit(PlayerStates.STATE_NEXT_TRACK)
-            playerState.tryEmit(PlayerStates.STATE_PLAYING)
+            playerState.tryEmit(PlayerState.STATE_NEXT_TRACK)
+            playerState.tryEmit(PlayerState.STATE_PLAYING)
         }
     }
 
@@ -121,24 +121,24 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     override fun onPlaybackStateChanged(playbackState: Int) {
         when (playbackState) {
             Player.STATE_IDLE -> {
-                playerState.tryEmit(PlayerStates.STATE_IDLE)
+                playerState.tryEmit(PlayerState.STATE_IDLE)
             }
 
             Player.STATE_BUFFERING -> {
-                playerState.tryEmit(PlayerStates.STATE_BUFFERING)
+                playerState.tryEmit(PlayerState.STATE_BUFFERING)
             }
 
             Player.STATE_READY -> {
-                playerState.tryEmit(PlayerStates.STATE_READY)
+                playerState.tryEmit(PlayerState.STATE_READY)
                 if (player.playWhenReady) {
-                    playerState.tryEmit(PlayerStates.STATE_PLAYING)
+                    playerState.tryEmit(PlayerState.STATE_PLAYING)
                 } else {
-                    playerState.tryEmit(PlayerStates.STATE_PAUSE)
+                    playerState.tryEmit(PlayerState.STATE_PAUSE)
                 }
             }
 
             Player.STATE_ENDED -> {
-                playerState.tryEmit(PlayerStates.STATE_END)
+                playerState.tryEmit(PlayerState.STATE_END)
             }
         }
     }

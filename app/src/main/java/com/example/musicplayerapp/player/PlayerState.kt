@@ -1,6 +1,6 @@
 package com.example.musicplayerapp.player
 
-enum class PlayerStates {
+enum class PlayerState {
     /**
      * State when the player is idle, not ready to play.
      */
