@@ -1,17 +1,13 @@
 package com.example.musicplayerapp.presentation.playerscreen
 
 import androidx.compose.runtime.Composable
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.musicplayerapp.player.MusicPlayerInterface
 import com.example.musicplayerapp.presentation.playerscreen.components.TrackList
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
-import com.example.musicplayerapp.presentation.playerscreen.viewmodel.PlayerViewModel
 
 @Composable
-fun PlayerScreen(viewModel: PlayerViewModel) {
+fun PlayerScreen(tracks: List<TrackState>, playerInterface: MusicPlayerInterface) {
 
-    val trackList: List<TrackState> = viewModel.tracks
-
-    TrackList(tracks = trackList)
+    TrackList(tracks = tracks, onTrackClick = { playerInterface.onTrackClick(it) })
 
 }

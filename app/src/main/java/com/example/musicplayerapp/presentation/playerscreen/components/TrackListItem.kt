@@ -35,7 +35,7 @@ fun TrackListItem(track: TrackState, onTrackClick: () -> Unit) {
             .padding(all = 5.dp)
             .clip(shape = RoundedCornerShape(8.dp))
             .background(color = bgColor)
-            .clickable(onClick = onTrackClick)
+            .clickable(onClick = { onTrackClick() })
     ) {
 //        TrackImage(trackImage = track.trackImage, modifier = Modifier.size(size = 64.dp))
         Column(

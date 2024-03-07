@@ -1,6 +1,8 @@
 package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -98,6 +100,10 @@ class PlayerViewModel @Inject constructor(
         return this.map { MediaItem.fromUri(it.trackUrl) }.toMutableList()
     }
 
+    private fun updateTracksList() {
+
+    }
+
     /**
      * Handles track selection.
      *
@@ -108,6 +114,10 @@ class PlayerViewModel @Inject constructor(
         if (selectedTrackIndex == -1 || selectedTrackIndex != index) {
             _tracks.resetTracks()
             selectedTrackIndex = index
+            Log.d(
+                "Track selection",
+                "Track with index: $index selected. Index in VM was changed to $selectedTrackIndex"
+            )
             setUpTrack()
         }
     }
@@ -140,8 +150,15 @@ class PlayerViewModel @Inject constructor(
             isTrackPlaying = state == PlayerState.STATE_PLAYING
             _tracks[selectedTrackIndex].state = state
             _tracks[selectedTrackIndex].isSelected = true
+            val updatedTracksList = _tracks.toList()
+            _tracks.clear()
+            _tracks.addAll(updatedTracksList)
+//            Log.d(
+//                "Track selection",
+//                "Track with index: $selectedTrackIndex is selected. Its state changed: ${_tracks[selectedTrackIndex].isSelected}"
+//            )
             selectedTrack = null
-            selectedTrack = tracks[selectedTrackIndex]
+            selectedTrack = _tracks[selectedTrackIndex]
 
             updatePlaybackState(state)
             if (state == PlayerState.STATE_NEXT_TRACK) {
