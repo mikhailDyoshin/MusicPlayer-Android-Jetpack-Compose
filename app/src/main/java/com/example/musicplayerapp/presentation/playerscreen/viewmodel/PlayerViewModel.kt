@@ -140,6 +140,12 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
+    private fun commitTrackListUpdate() {
+        val updatedTracksList = _tracks.toList()
+        _tracks.clear()
+        _tracks.addAll(updatedTracksList)
+    }
+
     /**
      * Updates the playback state and launches or cancels the playback state job accordingly.
      *
@@ -150,13 +156,11 @@ class PlayerViewModel @Inject constructor(
             isTrackPlaying = state == PlayerState.STATE_PLAYING
             _tracks[selectedTrackIndex].state = state
             _tracks[selectedTrackIndex].isSelected = true
-            val updatedTracksList = _tracks.toList()
-            _tracks.clear()
-            _tracks.addAll(updatedTracksList)
-//            Log.d(
-//                "Track selection",
-//                "Track with index: $selectedTrackIndex is selected. Its state changed: ${_tracks[selectedTrackIndex].isSelected}"
-//            )
+            commitTrackListUpdate()
+            Log.d(
+                "Track selection",
+                "Track with index: $selectedTrackIndex is selected. Its state changed: ${_tracks[selectedTrackIndex].isSelected}"
+            )
             selectedTrack = null
             selectedTrack = _tracks[selectedTrackIndex]
 
