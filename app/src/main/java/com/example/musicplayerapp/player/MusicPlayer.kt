@@ -1,5 +1,6 @@
 package com.example.musicplayerapp.player
 
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -49,6 +50,7 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
         if (player.playbackState == Player.STATE_IDLE) player.prepare()
         player.seekTo(index, 0)
         if (isTrackPlay) player.playWhenReady = true
+        Log.d("Player state", "Player state: ${player.playbackState}")
     }
 
     /**

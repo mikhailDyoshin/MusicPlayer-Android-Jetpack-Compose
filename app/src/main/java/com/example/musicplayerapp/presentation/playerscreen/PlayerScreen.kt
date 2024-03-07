@@ -8,6 +8,8 @@ import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
 @Composable
 fun PlayerScreen(tracks: List<TrackState>, playerInterface: MusicPlayerInterface) {
 
-    TrackList(tracks = tracks, onTrackClick = { playerInterface.onTrackClick(it) })
+    TrackList(tracks = tracks, onTrackClick = {
+        playerInterface.onTrackClick(it)
+    })
 
 }

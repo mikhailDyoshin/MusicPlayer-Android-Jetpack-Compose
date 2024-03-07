@@ -100,10 +100,6 @@ class PlayerViewModel @Inject constructor(
         return this.map { MediaItem.fromUri(it.trackUrl) }.toMutableList()
     }
 
-    private fun updateTracksList() {
-
-    }
-
     /**
      * Handles track selection.
      *

@@ -7,8 +7,10 @@ import javax.inject.Inject
 
 class MusicPlayerRepositoryImpl @Inject constructor() : MusicPlayerRepository {
     override fun getTrackList(): List<TrackModel> {
-        val alarmUrl = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM).toString()
+//        val alarmUrl = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM).toString()
         val ringtoneUrl = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE).toString()
+
+        val alarmUrl = "https://storage.googleapis.com/exoplayer-test-media-0/play.mp3"
 
         val alarmTrack =
             TrackModel.Builder()
