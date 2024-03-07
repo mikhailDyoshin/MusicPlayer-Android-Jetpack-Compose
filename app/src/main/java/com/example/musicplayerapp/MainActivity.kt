@@ -11,9 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.musicplayerapp.presentation.playerscreen.PlayerScreen
+import com.example.musicplayerapp.presentation.playerscreen.viewmodel.PlayerViewModel
 import com.example.musicplayerapp.ui.theme.MusicPlayerAppTheme
+import androidx.activity.viewModels
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: PlayerViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -24,7 +30,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
 
-                    PlayerScreen()
+                    PlayerScreen(viewModel)
                 }
             }
         }

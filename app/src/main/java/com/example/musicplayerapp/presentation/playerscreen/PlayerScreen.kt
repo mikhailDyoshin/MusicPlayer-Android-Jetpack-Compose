@@ -8,9 +8,7 @@ import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
 import com.example.musicplayerapp.presentation.playerscreen.viewmodel.PlayerViewModel
 
 @Composable
-fun PlayerScreen() {
-
-    val viewModel: PlayerViewModel = hiltViewModel()
+fun PlayerScreen(viewModel: PlayerViewModel) {
 
     val trackList: List<TrackState> = viewModel.tracks
 
