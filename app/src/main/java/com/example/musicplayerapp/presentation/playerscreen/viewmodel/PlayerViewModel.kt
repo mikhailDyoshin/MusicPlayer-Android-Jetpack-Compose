@@ -16,6 +16,7 @@ import com.example.musicplayerapp.player.MusicPlayerInterface
 import com.example.musicplayerapp.player.PlayerState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
+import com.example.musicplayerapp.utils.StateUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -56,6 +57,12 @@ class PlayerViewModel @Inject constructor(
      * A nullable [Job] instance that represents the ongoing process of updating the playback state.
      */
     private var playbackStateJob: Job? = null
+
+    /**
+     * The [stateUpdater] is used to start and stop updates (which happens after each frame)
+     * of the [player]'s state.
+     */
+    private val stateUpdater = StateUpdater(callBack = {}, updatePeriodMillis = 1000)
 
     /**
      * A public property backed by mutable state that holds the currently selected [TrackState].

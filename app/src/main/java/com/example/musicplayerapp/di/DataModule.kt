@@ -2,7 +2,6 @@ package com.example.musicplayerapp.di
 
 import com.example.musicplayerapp.data.MusicPlayerRepositoryImpl
 import com.example.musicplayerapp.domain.repository.MusicPlayerRepository
-import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,10 +24,4 @@ class DataModule {
         return trackRepository
     }
 
-    @Provides
-    fun provideGetTracksUseCase(
-        repository: MusicPlayerRepository
-    ): GetTracksUseCase {
-        return GetTracksUseCase(repository = repository)
-    }
 }
