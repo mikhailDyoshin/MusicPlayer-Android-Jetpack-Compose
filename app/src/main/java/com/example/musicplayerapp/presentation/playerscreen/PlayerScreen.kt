@@ -15,6 +15,7 @@ fun PlayerScreen(
     playbackState: StateFlow<PlaybackState>,
     playerInterface: MusicPlayerInterface,
     onSeekBarPositionChanged: (currentProgress: Long) -> Unit,
+    onSeekBarPositionChanging: () -> Unit,
 ) {
 
     Column {
@@ -24,6 +25,7 @@ fun PlayerScreen(
         TrackProgressSlider(
             playbackState = playbackState,
             onSeekBarPositionChanged = { currentProgress -> onSeekBarPositionChanged(currentProgress) },
+            onSeekBarPositionChanging = { onSeekBarPositionChanging() }
             )
     }
 

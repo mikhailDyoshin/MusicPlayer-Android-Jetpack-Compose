@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -27,13 +26,16 @@ import kotlinx.coroutines.flow.StateFlow
 @Composable
 fun TrackProgressSlider(
     playbackState: StateFlow<PlaybackState>,
+    onSeekBarPositionChanging: () -> Unit,
     onSeekBarPositionChanged: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
     val playbackStateValue = playbackState.collectAsState(
-        initial = PlaybackState(0L, 0L)
+        initial = PlaybackState(false, 0L, 0L)
     ).value
+
+    val inChangingState = playbackStateValue.isInChangingState
 
     val currentMediaProgress = playbackStateValue.currentPlaybackPosition.toFloat()
     var currentPosTemp by rememberSaveable { mutableFloatStateOf(0f) }
@@ -45,8 +47,9 @@ fun TrackProgressSlider(
         ), verticalArrangement = Arrangement.Center
     ) {
         Slider(
-            value = currentMediaProgress,
+            value = if (inChangingState) currentPosTemp else currentMediaProgress,
             onValueChange = {
+                onSeekBarPositionChanging()
                 currentPosTemp = it
             },
             onValueChangeFinished = {
@@ -94,11 +97,12 @@ fun TrackProgressSliderPreview() {
     val currentPosition = 50000L
     val trackDuration = 500000L
 
-    val mutableFlow = MutableStateFlow(PlaybackState(currentPosition, trackDuration))
+    val mutableFlow = MutableStateFlow(PlaybackState(false, currentPosition, trackDuration))
     val flow: StateFlow<PlaybackState> = mutableFlow
 
     TrackProgressSlider(
         playbackState = flow,
+        onSeekBarPositionChanging = {},
         onSeekBarPositionChanged = {},
 //        modifier = Modifier.background(color = Color.White)
     )

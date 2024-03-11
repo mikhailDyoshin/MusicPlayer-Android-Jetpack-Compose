@@ -43,7 +43,7 @@ class PlayerViewModel @Inject constructor(
      * A private [MutableStateFlow] that holds the current [PlaybackState].
      * It is used to emit updates about the playback state to observers.
      */
-    private val _playbackState = MutableStateFlow(PlaybackState(0L, 0L))
+    private val _playbackState = MutableStateFlow(PlaybackState(false,0L, 0L))
 
     /**
      * A public property that exposes the [_playbackState] as an immutable [StateFlow] for observers.
@@ -68,6 +68,9 @@ class PlayerViewModel @Inject constructor(
         callBack = { updateStateCallback() },
         updatePeriodMillis = UPDATE_DELAY
     )
+
+    var sliderIsInChangingState = mutableStateOf(false)
+        private set
 
     /**
      * A public property backed by mutable state that holds the currently selected [TrackState].
@@ -157,6 +160,7 @@ class PlayerViewModel @Inject constructor(
             if (playerState == PlayerState.STATE_PLAYING) {
                 _playbackState.tryEmit(
                     value = PlaybackState(
+                        isInChangingState = sliderIsInChangingState.value,
                         currentPlaybackPosition = player.currentPlaybackPosition,
                         currentTrackDuration = player.currentTrackDuration
                     )
@@ -167,6 +171,14 @@ class PlayerViewModel @Inject constructor(
         }
 
 
+    }
+
+    fun putSliderInChangingState() {
+        sliderIsInChangingState.value = true
+    }
+
+    fun pullSliderFromChangingState() {
+        sliderIsInChangingState.value = false
     }
 
     private fun startPlaying() {

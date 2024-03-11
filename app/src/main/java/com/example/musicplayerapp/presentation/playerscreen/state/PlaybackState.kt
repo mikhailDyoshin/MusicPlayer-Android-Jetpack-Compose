@@ -7,6 +7,7 @@ package com.example.musicplayerapp.presentation.playerscreen.state
  * @property currentTrackDuration Duration of the current track that's playing, in milliseconds.
  */
 data class PlaybackState(
+    val isInChangingState: Boolean,
     val currentPlaybackPosition: Long,
     val currentTrackDuration: Long
 )

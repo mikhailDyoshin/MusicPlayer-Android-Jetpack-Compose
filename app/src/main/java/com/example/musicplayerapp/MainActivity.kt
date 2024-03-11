@@ -34,10 +34,15 @@ class MainActivity : ComponentActivity() {
                         playbackState = viewModel.playbackState,
                         playerInterface = viewModel,
                         onSeekBarPositionChanged = { currentProgress ->
+                            viewModel.pullSliderFromChangingState()
                             viewModel.onSeekBarPositionChanged(
                                 currentProgress
                             )
-                        })
+                        },
+                        onSeekBarPositionChanging = {
+                            viewModel.putSliderInChangingState()
+                        }
+                        )
                 }
             }
         }
