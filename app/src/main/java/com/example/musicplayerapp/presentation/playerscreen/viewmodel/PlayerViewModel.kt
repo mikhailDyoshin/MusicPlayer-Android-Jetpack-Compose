@@ -1,15 +1,12 @@
 package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 
-import android.util.Log
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
-import com.example.musicplayerapp.config.UPDATE_DELAY
 import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.MusicPlayer
 import com.example.musicplayerapp.player.MusicPlayerInterface
@@ -18,12 +15,10 @@ import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
 import com.example.musicplayerapp.utils.StateUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -68,7 +63,10 @@ class PlayerViewModel @Inject constructor(
      * The [stateUpdater] is used to start and stop updates (which happens after each frame)
      * of the [player]'s state.
      */
-    private val stateUpdater = StateUpdater(callBack = {}, updatePeriodMillis = 1000)
+    private val stateUpdater = StateUpdater(
+        callBack = { updateStateCallback() },
+        updatePeriodMillis = 1000
+    )
 
     /**
      * A public property backed by mutable state that holds the currently selected [TrackState].
@@ -101,7 +99,6 @@ class PlayerViewModel @Inject constructor(
                 )
             })
         player.initPlayer(tracks.toMediaItemList())
-        observePlayerState()
     }
 
     /**
@@ -123,10 +120,9 @@ class PlayerViewModel @Inject constructor(
         if (selectedTrackIndex == -1 || selectedTrackIndex != index) {
             _tracks.resetTracks()
             selectedTrackIndex = index
-            Log.d(
-                "Track selection",
-                "Track with index: $index selected. Index in VM was changed to $selectedTrackIndex"
-            )
+            _tracks[index].isSelected = true
+            _tracks[index].state = PlayerState.STATE_PLAYING
+            commitTrackListUpdate()
             setUpTrack()
         }
     }
@@ -135,8 +131,7 @@ class PlayerViewModel @Inject constructor(
      * Plays selected track in the list.
      */
     private fun setUpTrack() {
-        if (!isAutoSwitch) player.setUpTrack(selectedTrackIndex, isTrackPlaying)
-        isAutoSwitch = false
+        player.setUpTrack(selectedTrackIndex)
     }
 
     /**
@@ -155,89 +150,40 @@ class PlayerViewModel @Inject constructor(
         _tracks.addAll(updatedTracksList)
     }
 
-    /**
-     * Updates the playback state and launches or cancels the playback state job accordingly.
-     *
-     * @param state The new player state.
-     */
-    private fun updateState(state: PlayerState) {
-        if (selectedTrackIndex != -1) {
-            isTrackPlaying = state == PlayerState.STATE_PLAYING
-            _tracks[selectedTrackIndex].state = state
-            _tracks[selectedTrackIndex].isSelected = true
-            commitTrackListUpdate()
-            Log.d(
-                "Track selection",
-                "Track with index: $selectedTrackIndex is selected. Its state changed: ${_tracks[selectedTrackIndex].isSelected}"
-            )
-            selectedTrack = null
-            selectedTrack = _tracks[selectedTrackIndex]
-
-            updatePlaybackState(state)
-            if (state == PlayerState.STATE_NEXT_TRACK) {
-                isAutoSwitch = true
-                onNextClick()
-            }
-            if (state == PlayerState.STATE_END) onTrackSelected(0)
-        }
-    }
-
-    private fun updatePlaybackState(state: PlayerState) {
-        playbackStateJob?.cancel()
-        playbackStateJob = viewModelScope.launchPlaybackStateJob(_playbackState, state, player)
-    }
-
-    private fun observePlayerState() {
-        viewModelScope.collectPlayerState(player, ::updateState)
-    }
-
-    /**
-     * Collects the player state from [player] and provides updates via the [updateState] function.
-     *
-     * @param player The player whose state is to be collected.
-     * @param updateState A function to process the player state updates.
-     */
-    private fun CoroutineScope.collectPlayerState(
-        player: MusicPlayer, updateState: (PlayerState) -> Unit
-    ) {
-        this.launch {
-            player.playerState.collect {
-                updateState(it)
-            }
-        }
-    }
-
-    /**
-     * Launches a coroutine to periodically update the [playbackStateFlow] with the current
-     * playback position and track duration from [myPlayer] as long as the player state is [PlayerState.STATE_PLAYING].
-     *
-     * @param playbackStateFlow The MutableStateFlow to be updated.
-     * @param state The current player state.
-     * @param myPlayer The player whose playback information is to be collected.
-     */
-    private fun CoroutineScope.launchPlaybackStateJob(
-        playbackStateFlow: MutableStateFlow<PlaybackState>,
-        state: PlayerState,
-        myPlayer: MusicPlayer
-    ) = launch {
-        do {
-            playbackStateFlow.emit(
-                PlaybackState(
-                    currentPlaybackPosition = myPlayer.currentPlaybackPosition,
-                    currentTrackDuration = myPlayer.currentTrackDuration
+    private fun updateStateCallback() {
+        viewModelScope.launch {
+            val playerState = player.playerState.value
+            if (playerState == PlayerState.STATE_PLAYING) {
+                _playbackState.tryEmit(
+                    value = PlaybackState(
+                        currentPlaybackPosition = player.currentPlaybackPosition,
+                        currentTrackDuration = player.currentTrackDuration
+                    )
                 )
-            )
-            delay(UPDATE_DELAY)
-        } while (state == PlayerState.STATE_PLAYING && isActive)
+            } else {
+                stateUpdater.stop()
+            }
+        }
+
+
     }
 
+    private fun startPlaying() {
+        player.play()
+        stateUpdater.start()
+    }
 
-    /**
-     * Implementation of [MusicPlayerInterface.onPlayPauseClick].
-     * Toggles play/pause state of the current track.
-     */
-    override fun onPlayPauseClick() {
-        player.playPause()
+    private fun stopPlaying() {
+        player.pause()
+        stateUpdater.stop()
+    }
+
+    override fun onPlayClick() {
+        startPlaying()
+    }
+
+    override fun onPauseClick() {
+        stopPlaying()
     }
 
     /**
@@ -264,6 +210,7 @@ class PlayerViewModel @Inject constructor(
      */
     override fun onTrackClick(track: TrackState) {
         onTrackSelected(tracks.indexOf(track))
+        startPlaying()
     }
 
     /**

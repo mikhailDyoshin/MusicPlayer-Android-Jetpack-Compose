@@ -5,9 +5,14 @@ import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
 interface MusicPlayerInterface {
 
     /**
-     * Invoked when the play or pause button is clicked.
+     * Invoked when the play button is clicked.
      */
-    fun onPlayPauseClick()
+    fun onPlayClick()
+
+    /**
+     * Invoked when the pause button is clicked.
+     */
+    fun onPauseClick()
 
     /**
      * Invoked when the previous button is clicked.

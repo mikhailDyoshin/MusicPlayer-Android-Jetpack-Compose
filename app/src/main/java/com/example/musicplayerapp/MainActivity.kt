@@ -18,7 +18,7 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: PlayerViewModel by viewModels()
 
-//    private val tracksState = viewModel.tracks
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
 
-                    PlayerScreen(tracks = viewModel.tracks, playerInterface = viewModel)
+                    PlayerScreen(tracks = viewModel.tracks, playbackState = viewModel.playbackState, playerInterface = viewModel)
                 }
             }
         }
