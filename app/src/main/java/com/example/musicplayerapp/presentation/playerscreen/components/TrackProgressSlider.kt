@@ -56,7 +56,7 @@ fun TrackProgressSlider(
             onValueChange = {
                 onSeekBarPositionChanging()
                 currentPosTemp = it
-                currentPlaybackTime = (it * playbackStateValue.currentTrackDuration).toLong().formatTime()
+                currentPlaybackTime = it.toLong().formatTime()
             },
             onValueChangeFinished = {
                 onSeekBarPositionChanged(currentPosTemp.toLong())
