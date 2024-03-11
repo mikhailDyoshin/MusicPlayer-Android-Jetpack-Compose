@@ -13,6 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -40,6 +43,8 @@ fun TrackProgressSlider(
     val currentMediaProgress = playbackStateValue.currentPlaybackPosition.toFloat()
     var currentPosTemp by rememberSaveable { mutableFloatStateOf(0f) }
 
+    var currentPlaybackTime by remember { mutableStateOf("") }
+
     Column(
         modifier = modifier.background(
             color = Color.White,
@@ -51,6 +56,7 @@ fun TrackProgressSlider(
             onValueChange = {
                 onSeekBarPositionChanging()
                 currentPosTemp = it
+                currentPlaybackTime = (it * playbackStateValue.currentTrackDuration).toLong().formatTime()
             },
             onValueChangeFinished = {
                 onSeekBarPositionChanged(currentPosTemp.toLong())
@@ -67,7 +73,7 @@ fun TrackProgressSlider(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = playbackStateValue.currentPlaybackPosition.formatTime(),
+                text = if (inChangingState) currentPlaybackTime else playbackStateValue.currentPlaybackPosition.formatTime(),
             )
             Text(
                 text = playbackStateValue.currentTrackDuration.formatTime(),
