@@ -29,7 +29,15 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
 
-                    PlayerScreen(tracks = viewModel.tracks, playbackState = viewModel.playbackState, playerInterface = viewModel)
+                    PlayerScreen(
+                        tracks = viewModel.tracks,
+                        playbackState = viewModel.playbackState,
+                        playerInterface = viewModel,
+                        onSeekBarPositionChanged = { currentProgress ->
+                            viewModel.onSeekBarPositionChanged(
+                                currentProgress
+                            )
+                        })
                 }
             }
         }

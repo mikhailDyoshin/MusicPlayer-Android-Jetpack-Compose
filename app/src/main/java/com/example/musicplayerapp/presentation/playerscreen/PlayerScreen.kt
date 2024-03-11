@@ -13,14 +13,18 @@ import kotlinx.coroutines.flow.StateFlow
 fun PlayerScreen(
     tracks: List<TrackState>,
     playbackState: StateFlow<PlaybackState>,
-    playerInterface: MusicPlayerInterface
+    playerInterface: MusicPlayerInterface,
+    onSeekBarPositionChanged: (currentProgress: Long) -> Unit,
 ) {
 
     Column {
         TrackList(tracks = tracks, onTrackClick = {
             playerInterface.onTrackClick(it)
         })
-        TrackProgressSlider(playbackState = playbackState, onSeekBarPositionChanged = {})
+        TrackProgressSlider(
+            playbackState = playbackState,
+            onSeekBarPositionChanged = { currentProgress -> onSeekBarPositionChanged(currentProgress) },
+            )
     }
 
 }

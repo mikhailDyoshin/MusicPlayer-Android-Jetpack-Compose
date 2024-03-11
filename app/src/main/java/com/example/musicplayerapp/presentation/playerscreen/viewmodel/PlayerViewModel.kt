@@ -220,7 +220,7 @@ class PlayerViewModel @Inject constructor(
      * @param position The position to seek to.
      */
     override fun onSeekBarPositionChanged(position: Long) {
-        viewModelScope.launch { player.seekToPosition(position) }
+        player.seekToPosition(position)
     }
 
     /**

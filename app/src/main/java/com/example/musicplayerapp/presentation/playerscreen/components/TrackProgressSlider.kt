@@ -35,7 +35,7 @@ fun TrackProgressSlider(
         initial = PlaybackState(0L, 0L)
     ).value
 
-    var currentMediaProgress = playbackStateValue.currentPlaybackPosition.toFloat()
+    val currentMediaProgress = playbackStateValue.currentPlaybackPosition.toFloat()
     var currentPosTemp by rememberSaveable { mutableFloatStateOf(0f) }
 
     Column(
@@ -45,12 +45,12 @@ fun TrackProgressSlider(
         ), verticalArrangement = Arrangement.Center
     ) {
         Slider(
-            value = if (currentPosTemp == 0f) currentMediaProgress else currentPosTemp,
-            onValueChange = { currentPosTemp = it },
+            value = currentMediaProgress,
+            onValueChange = {
+                currentPosTemp = it
+            },
             onValueChangeFinished = {
-                currentMediaProgress = currentPosTemp
-                currentPosTemp = 0f
-                onSeekBarPositionChanged(currentMediaProgress.toLong())
+                onSeekBarPositionChanged(currentPosTemp.toLong())
             },
             valueRange = 0f..playbackStateValue.currentTrackDuration.toFloat(),
             modifier = Modifier
