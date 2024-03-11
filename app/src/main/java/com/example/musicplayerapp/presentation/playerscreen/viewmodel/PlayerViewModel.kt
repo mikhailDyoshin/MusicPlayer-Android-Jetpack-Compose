@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import com.example.musicplayerapp.config.UPDATE_DELAY
 import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.MusicPlayer
 import com.example.musicplayerapp.player.MusicPlayerInterface
@@ -65,7 +66,7 @@ class PlayerViewModel @Inject constructor(
      */
     private val stateUpdater = StateUpdater(
         callBack = { updateStateCallback() },
-        updatePeriodMillis = 1000
+        updatePeriodMillis = UPDATE_DELAY
     )
 
     /**
