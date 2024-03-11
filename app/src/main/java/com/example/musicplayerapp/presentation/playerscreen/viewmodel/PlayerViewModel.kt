@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -47,6 +48,11 @@ class PlayerViewModel @Inject constructor(
      * It is used to emit updates about the playback state to observers.
      */
     private val _playbackState = MutableStateFlow(PlaybackState(0L, 0L))
+
+    /**
+     * A public property that exposes the [_playbackState] as an immutable [StateFlow] for observers.
+     */
+    val playbackState: StateFlow<PlaybackState> get() = _playbackState
 
     /**
      * A private Boolean variable to know whether a track is currently being played or not.
