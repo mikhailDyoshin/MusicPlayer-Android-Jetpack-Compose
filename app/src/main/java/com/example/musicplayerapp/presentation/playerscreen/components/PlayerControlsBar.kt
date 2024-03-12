@@ -31,7 +31,8 @@ fun PlayerControlsBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(color = Color.White),
+            .background(color = Color.White)
+            .padding(vertical = 5.dp),
         horizontalArrangement = Arrangement.Center
 
     ) {

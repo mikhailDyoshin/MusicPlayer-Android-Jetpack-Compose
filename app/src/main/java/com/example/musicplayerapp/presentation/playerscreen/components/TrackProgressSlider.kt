@@ -48,7 +48,6 @@ fun TrackProgressSlider(
     Column(
         modifier = modifier.background(
             color = Color.White,
-            shape = RoundedCornerShape(15.dp)
         ), verticalArrangement = Arrangement.Center
     ) {
         Slider(
