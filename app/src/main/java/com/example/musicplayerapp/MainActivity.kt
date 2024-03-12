@@ -44,7 +44,9 @@ class MainActivity : ComponentActivity() {
                             viewModel.putSliderInChangingState()
                         },
                         onPlay = { viewModel.onPlayClick() },
-                        onPause = { viewModel.onPauseClick() }
+                        onPause = { viewModel.onPauseClick() },
+                        onNext = { viewModel.onNextClick() },
+                        onPrev = { viewModel.onPreviousClick() }
                     )
                 }
             }

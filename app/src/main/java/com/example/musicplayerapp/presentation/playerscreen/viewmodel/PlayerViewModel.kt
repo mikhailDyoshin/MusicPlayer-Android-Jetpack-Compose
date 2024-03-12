@@ -4,6 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -42,7 +43,7 @@ class PlayerViewModel @Inject constructor(
      * A private [MutableStateFlow] that holds the current [PlaybackState].
      * It is used to emit updates about the playback state to observers.
      */
-    private val _playbackState = MutableStateFlow(PlaybackState(false,0L, 0L))
+    private val _playbackState = MutableStateFlow(PlaybackState(false, 0L, 0L))
 
     /**
      * A public property that exposes the [_playbackState] as an immutable [StateFlow] for observers.
@@ -80,7 +81,7 @@ class PlayerViewModel @Inject constructor(
     /**
      * A private property that holds the index of the currently selected track.
      */
-    private var selectedTrackIndex = -1
+    private var selectedTrackIndex = 0
 
     /**
      * A private Boolean variable to keep track of whether the track selection is automatic (i.e., due to the completion of a track) or manual.
@@ -101,6 +102,7 @@ class PlayerViewModel @Inject constructor(
                 )
             })
         player.initPlayer(tracks.toMediaItemList())
+        onTrackSelected(selectedTrackIndex)
     }
 
     /**
@@ -118,15 +120,12 @@ class PlayerViewModel @Inject constructor(
      * @param index The index of the selected track in the track list.
      */
     private fun onTrackSelected(index: Int) {
-//        if (selectedTrackIndex == -1) isTrackPlaying = true
-        if (selectedTrackIndex == -1 || selectedTrackIndex != index) {
             _tracks.resetTracks()
             selectedTrackIndex = index
             _tracks[index].isSelected = true
             _tracks[index].state = PlayerState.STATE_PLAYING
             commitTrackListUpdate()
             setUpTrack()
-        }
     }
 
     /**
@@ -155,24 +154,31 @@ class PlayerViewModel @Inject constructor(
     private fun updateStateCallback() {
         viewModelScope.launch {
             val playerState = player.playerState.value
-            if (playerState == PlayerState.STATE_PLAYING) {
-                _isTrackPlaying.value = true
-                _playbackState.tryEmit(
-                    value = PlaybackState(
-                        isInChangingState = sliderIsInChangingState.value,
-                        currentPlaybackPosition = player.currentPlaybackPosition,
-                        currentTrackDuration = player.currentTrackDuration
+
+            when (playerState) {
+                PlayerState.STATE_PLAYING -> {
+                    _isTrackPlaying.value = true
+                    _playbackState.tryEmit(
+                        value = PlaybackState(
+                            isInChangingState = sliderIsInChangingState.value,
+                            currentPlaybackPosition = player.currentPlaybackPosition,
+                            currentTrackDuration = player.currentTrackDuration
+                        )
                     )
-                )
-            } else {
-                if (playerState != PlayerState.STATE_BUFFERING) {
-                    _isTrackPlaying.value = false
                 }
-                stateUpdater.stop()
+                PlayerState.STATE_BUFFERING -> {
+                    _isTrackPlaying.value = true
+
+                }
+                PlayerState.STATE_NEXT_TRACK -> {
+                    switchToNextTrack()
+                }
+                else -> {
+                    _isTrackPlaying.value = false
+                    stateUpdater.stop()
+                }
             }
         }
-
-
     }
 
     fun putSliderInChangingState() {
@@ -193,6 +199,10 @@ class PlayerViewModel @Inject constructor(
         stateUpdater.stop()
     }
 
+    private fun switchToNextTrack() {
+        if (selectedTrackIndex < tracks.size - 1) onTrackSelected(selectedTrackIndex + 1)
+    }
+
     override fun onPlayClick() {
         startPlaying()
     }
@@ -207,6 +217,9 @@ class PlayerViewModel @Inject constructor(
      */
     override fun onPreviousClick() {
         if (selectedTrackIndex > 0) onTrackSelected(selectedTrackIndex - 1)
+        if (isTrackPlaying.value) {
+            startPlaying()
+        }
     }
 
     /**
@@ -214,7 +227,10 @@ class PlayerViewModel @Inject constructor(
      * Switches to the next track in the list if one exists.
      */
     override fun onNextClick() {
-        if (selectedTrackIndex < tracks.size - 1) onTrackSelected(selectedTrackIndex + 1)
+        switchToNextTrack()
+        if (isTrackPlaying.value) {
+            startPlaying()
+        }
     }
 
     /**

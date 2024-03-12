@@ -52,16 +52,7 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     fun setUpTrack(index: Int) {
         if (player.playbackState == Player.STATE_IDLE) player.prepare()
         player.seekTo(index, 0)
-        player.play()
     }
-
-    /**
-     * Toggles the playback state between playing and paused.
-     */
-//    fun playPause() {
-//        if (player.playbackState == Player.STATE_IDLE) player.prepare()
-//        player.playWhenReady = !player.playWhenReady
-//    }
 
     fun play() {
         player.play()

@@ -25,6 +25,8 @@ fun PlayerScreen(
     onSeekBarPositionChanging: () -> Unit,
     onPlay: () -> Unit,
     onPause: () -> Unit,
+    onNext: () -> Unit,
+    onPrev: () -> Unit,
 ) {
 
     Box(
@@ -42,8 +44,8 @@ fun PlayerScreen(
             isPlaying = isPlaying,
             onPlay = { onPlay() },
             onPause = { onPause() },
-            onNext = { /*TODO*/ },
-            onPrev = { /*TODO*/ },
+            onNext = { onNext() },
+            onPrev = { onPrev() },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
@@ -76,6 +78,8 @@ fun PlayerScreenPreview() {
         onSeekBarPositionChanged = {},
         onSeekBarPositionChanging = {},
         onPlay = {},
-        onPause = {}
+        onPause = {},
+        onNext = {},
+        onPrev = {}
     )
 }
