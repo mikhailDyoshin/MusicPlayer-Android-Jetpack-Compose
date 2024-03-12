@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
+import com.example.musicplayerapp.ui.theme.PurpleGrey40
 
 /**
  * A composable function that displays a list item for a track.
@@ -26,21 +27,21 @@ import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
  */
 @Composable
 fun TrackListItem(track: TrackState, onTrackClick: () -> Unit) {
-    val bgColor = if (track.isSelected) Color.Gray else Color.White
+    val bgColor = if (track.isSelected) PurpleGrey40 else Color.White
     val textColor = Color.Black
 //        if (track.isSelected) Color.Gray else Color.Black
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .padding(all = 5.dp)
-            .clip(shape = RoundedCornerShape(8.dp))
+            .padding(vertical = 5.dp, horizontal = 5.dp)
+            .clip(shape = RoundedCornerShape(15.dp))
             .background(color = bgColor)
             .clickable(onClick = { onTrackClick() })
     ) {
 //        TrackImage(trackImage = track.trackImage, modifier = Modifier.size(size = 64.dp))
         Column(
             modifier = Modifier
-                .padding(start = 10.dp, end = 10.dp)
+                .padding(vertical = 5.dp, horizontal = 10.dp)
                 .weight(weight = 1f)
         ) {
 
