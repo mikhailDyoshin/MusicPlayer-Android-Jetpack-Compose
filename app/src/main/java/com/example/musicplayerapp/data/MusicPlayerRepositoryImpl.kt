@@ -1,34 +1,33 @@
 package com.example.musicplayerapp.data
 
+import android.content.Context
 import android.media.RingtoneManager
 import com.example.musicplayerapp.domain.models.TrackModel
 import com.example.musicplayerapp.domain.repository.MusicPlayerRepository
 import javax.inject.Inject
 
-class MusicPlayerRepositoryImpl @Inject constructor() : MusicPlayerRepository {
+class MusicPlayerRepositoryImpl @Inject constructor(private val context: Context) : MusicPlayerRepository {
     override fun getTrackList(): List<TrackModel> {
-//        val alarmUrl = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM).toString()
-        val ringtoneUrl = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE).toString()
 
-        val alarmUrl = "https://storage.googleapis.com/exoplayer-test-media-0/play.mp3"
+        val audioUrl = "https://storage.googleapis.com/exoplayer-test-media-0/play.mp3"
 
-        val alarmTrack =
+        val track1 =
             TrackModel.Builder()
                 .trackId(1)
-                .trackName("Alarm")
-                .trackUrl(alarmUrl)
+                .trackName("Audio 1")
+                .trackUrl(audioUrl)
                 .artistName("Mr. Android")
                 .build()
 
-        val ringtoneTrack =
+        val track2 =
             TrackModel.Builder()
                 .trackId(2)
-                .trackName("Ringtone")
-                .trackUrl(ringtoneUrl)
-                .artistName("Mr. Android")
+                .trackName("Audio 2")
+                .trackUrl(audioUrl)
+                .artistName("Ms. Android")
                 .build()
 
-        return listOf(alarmTrack, ringtoneTrack)
+        return listOf(track1, track2)
     }
 
 }
