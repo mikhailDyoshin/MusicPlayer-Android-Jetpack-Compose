@@ -1,5 +1,6 @@
 package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -16,10 +17,8 @@ import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
 import com.example.musicplayerapp.utils.StateUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -53,12 +52,12 @@ class PlayerViewModel @Inject constructor(
     /**
      * A private Boolean variable to know whether a track is currently being played or not.
      */
-    private var isTrackPlaying: Boolean = false
+    private val _isTrackPlaying = mutableStateOf(false)
 
     /**
-     * A nullable [Job] instance that represents the ongoing process of updating the playback state.
+     * A public property that exposes the [_isTrackPlaying] as an immutable [State] for observers.
      */
-    private var playbackStateJob: Job? = null
+    val isTrackPlaying: State<Boolean> = _isTrackPlaying
 
     /**
      * The [stateUpdater] is used to start and stop updates (which happens after each frame)
@@ -69,8 +68,7 @@ class PlayerViewModel @Inject constructor(
         updatePeriodMillis = UPDATE_DELAY
     )
 
-    var sliderIsInChangingState = mutableStateOf(false)
-        private set
+    private val sliderIsInChangingState = mutableStateOf(false)
 
     /**
      * A public property backed by mutable state that holds the currently selected [TrackState].
@@ -120,7 +118,7 @@ class PlayerViewModel @Inject constructor(
      * @param index The index of the selected track in the track list.
      */
     private fun onTrackSelected(index: Int) {
-        if (selectedTrackIndex == -1) isTrackPlaying = true
+//        if (selectedTrackIndex == -1) isTrackPlaying = true
         if (selectedTrackIndex == -1 || selectedTrackIndex != index) {
             _tracks.resetTracks()
             selectedTrackIndex = index
@@ -158,6 +156,7 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             val playerState = player.playerState.value
             if (playerState == PlayerState.STATE_PLAYING) {
+                _isTrackPlaying.value = true
                 _playbackState.tryEmit(
                     value = PlaybackState(
                         isInChangingState = sliderIsInChangingState.value,
@@ -166,6 +165,7 @@ class PlayerViewModel @Inject constructor(
                     )
                 )
             } else {
+                _isTrackPlaying.value = false
                 stateUpdater.stop()
             }
         }
