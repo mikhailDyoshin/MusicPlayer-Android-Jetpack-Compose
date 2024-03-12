@@ -23,6 +23,8 @@ fun PlayerScreen(
     onTrackClick: (track: TrackState) -> Unit,
     onSeekBarPositionChanged: (currentProgress: Long) -> Unit,
     onSeekBarPositionChanging: () -> Unit,
+    onPlay: () -> Unit,
+    onPause: () -> Unit,
 ) {
 
     Box(
@@ -38,8 +40,8 @@ fun PlayerScreen(
             onSeekBarPositionChanging = { onSeekBarPositionChanging() },
             onSeekBarPositionChanged = { onSeekBarPositionChanged(it) },
             isPlaying = isPlaying,
-            onPlay = { /*TODO*/ },
-            onPause = { /*TODO*/ },
+            onPlay = { onPlay() },
+            onPause = { onPause() },
             onNext = { /*TODO*/ },
             onPrev = { /*TODO*/ },
             modifier = Modifier.align(Alignment.BottomCenter)
@@ -71,8 +73,9 @@ fun PlayerScreenPreview() {
         isPlaying = false,
         playbackState = flow,
         onTrackClick = {},
-        onSeekBarPositionChanged = {}
-    ) {
-
-    }
+        onSeekBarPositionChanged = {},
+        onSeekBarPositionChanging = {},
+        onPlay = {},
+        onPause = {}
+    )
 }

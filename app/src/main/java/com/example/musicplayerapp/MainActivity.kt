@@ -42,8 +42,10 @@ class MainActivity : ComponentActivity() {
                         },
                         onSeekBarPositionChanging = {
                             viewModel.putSliderInChangingState()
-                        }
-                        )
+                        },
+                        onPlay = { viewModel.onPlayClick() },
+                        onPause = { viewModel.onPauseClick() }
+                    )
                 }
             }
         }
