@@ -165,7 +165,9 @@ class PlayerViewModel @Inject constructor(
                     )
                 )
             } else {
-                _isTrackPlaying.value = false
+                if (playerState != PlayerState.STATE_BUFFERING) {
+                    _isTrackPlaying.value = false
+                }
                 stateUpdater.stop()
             }
         }
