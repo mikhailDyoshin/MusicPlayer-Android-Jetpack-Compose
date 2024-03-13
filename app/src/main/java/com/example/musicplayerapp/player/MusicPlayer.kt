@@ -7,6 +7,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.Tracks
 import javax.inject.Inject
 
 class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Listener {
@@ -113,7 +114,6 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
         super.onMediaItemTransition(mediaItem, reason)
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
             _playerState.tryEmit(PlayerState.STATE_NEXT_TRACK)
-            _playerState.tryEmit(PlayerState.STATE_PLAYING)
         }
     }
 

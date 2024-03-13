@@ -84,9 +84,10 @@ class PlayerViewModel @Inject constructor(
     private var selectedTrackIndex = 0
 
     /**
-     * A private Boolean variable to keep track of whether the track selection is automatic (i.e., due to the completion of a track) or manual.
+     * A private Boolean variable to keep track of whether the track selection is automatic
+     * (i.e., due to the completion of a track) or manual.
      */
-    private var isAutoSwitch: Boolean = false
+    private var isAutoSwitch: Boolean = true
 
     init {
         _tracks.addAll(
@@ -168,10 +169,9 @@ class PlayerViewModel @Inject constructor(
                 }
                 PlayerState.STATE_BUFFERING -> {
                     _isTrackPlaying.value = true
-
                 }
                 PlayerState.STATE_NEXT_TRACK -> {
-                    switchToNextTrack()
+                        switchToNextTrack()
                 }
                 else -> {
                     _isTrackPlaying.value = false
@@ -200,7 +200,9 @@ class PlayerViewModel @Inject constructor(
     }
 
     private fun switchToNextTrack() {
-        if (selectedTrackIndex < tracks.size - 1) onTrackSelected(selectedTrackIndex + 1)
+        if (selectedTrackIndex < tracks.size - 1) {
+            onTrackSelected(selectedTrackIndex + 1)
+        }
     }
 
     override fun onPlayClick() {
@@ -216,7 +218,9 @@ class PlayerViewModel @Inject constructor(
      * Switches to the previous track if one exists.
      */
     override fun onPreviousClick() {
-        if (selectedTrackIndex > 0) onTrackSelected(selectedTrackIndex - 1)
+        if (selectedTrackIndex > 0) {
+            onTrackSelected(selectedTrackIndex - 1)
+        }
         if (isTrackPlaying.value) {
             startPlaying()
         }
