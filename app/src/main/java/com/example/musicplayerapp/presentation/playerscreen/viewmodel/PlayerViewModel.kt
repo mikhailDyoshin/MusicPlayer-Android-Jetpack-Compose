@@ -163,6 +163,16 @@ class PlayerViewModel @Inject constructor(
                         )
                     )
                 }
+                PlayerState.STATE_PAUSE -> {
+                    _isTrackPlaying.value = false
+                    _playbackState.tryEmit(
+                        value = PlaybackState(
+                            isInChangingState = sliderIsInChangingState.value,
+                            currentPlaybackPosition = player.currentPlaybackPosition,
+                            currentTrackDuration = player.currentTrackDuration
+                        )
+                    )
+                }
                 PlayerState.STATE_BUFFERING -> {
                     // Whether a track is playing or not the player's isTrackPlaying-state
                     // stays the same while buffering
