@@ -168,7 +168,9 @@ class PlayerViewModel @Inject constructor(
                     )
                 }
                 PlayerState.STATE_BUFFERING -> {
-                    _isTrackPlaying.value = true
+                    // Whether a track is playing or not the player's isTrackPlaying-state
+                    // stays the same while buffering
+                    _isTrackPlaying.value = _isTrackPlaying.value
                 }
                 PlayerState.STATE_NEXT_TRACK -> {
                         switchToNextTrack()
