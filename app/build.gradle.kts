@@ -73,6 +73,9 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.51")
     kapt("com.google.dagger:hilt-android-compiler:2.51")
 
+    // Hilt navigation
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+
     // ExoPlayer
     implementation("androidx.media3:media3-exoplayer:1.2.1")
     implementation("androidx.media3:media3-exoplayer-dash:1.2.1")

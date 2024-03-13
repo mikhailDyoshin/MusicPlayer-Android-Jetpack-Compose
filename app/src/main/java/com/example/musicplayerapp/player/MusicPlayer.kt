@@ -1,10 +1,13 @@
 package com.example.musicplayerapp.player
 
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.Tracks
 import javax.inject.Inject
 
 class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Listener {
@@ -12,7 +15,9 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     /**
      * A state flow that emits the current playback state of the player.
      */
-    val playerState = MutableStateFlow(PlayerStates.STATE_IDLE)
+    private val _playerState = MutableStateFlow(PlayerState.STATE_IDLE)
+
+    val playerState: StateFlow<PlayerState> get() = _playerState
 
     /**
      * The current playback position in milliseconds. If the player's position
@@ -43,20 +48,18 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
      * Sets up the player to start playback of the track at the specified index.
      *
      * @param index The index of the track in the playlist.
-     * @param isTrackPlay If true, playback will start immediately.
      */
-    fun setUpTrack(index: Int, isTrackPlay: Boolean) {
+    fun setUpTrack(index: Int) {
         if (player.playbackState == Player.STATE_IDLE) player.prepare()
         player.seekTo(index, 0)
-        if (isTrackPlay) player.playWhenReady = true
     }
 
-    /**
-     * Toggles the playback state between playing and paused.
-     */
-    fun playPause() {
-        if (player.playbackState == Player.STATE_IDLE) player.prepare()
-        player.playWhenReady = !player.playWhenReady
+    fun play() {
+        player.play()
+    }
+
+    fun pause() {
+        player.pause()
     }
 
     /**
@@ -83,7 +86,7 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
      */
     override fun onPlayerError(error: PlaybackException) {
         super.onPlayerError(error)
-        playerState.tryEmit(PlayerStates.STATE_ERROR)
+        _playerState.tryEmit(PlayerState.STATE_ERROR)
     }
 
     /**
@@ -94,9 +97,9 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
         if (player.playbackState == Player.STATE_READY) {
             if (playWhenReady) {
-                playerState.tryEmit(PlayerStates.STATE_PLAYING)
+                _playerState.tryEmit(PlayerState.STATE_PLAYING)
             } else {
-                playerState.tryEmit(PlayerStates.STATE_PAUSE)
+                _playerState.tryEmit(PlayerState.STATE_PAUSE)
             }
         }
     }
@@ -109,8 +112,7 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         super.onMediaItemTransition(mediaItem, reason)
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
-            playerState.tryEmit(PlayerStates.STATE_NEXT_TRACK)
-            playerState.tryEmit(PlayerStates.STATE_PLAYING)
+            _playerState.tryEmit(PlayerState.STATE_NEXT_TRACK)
         }
     }
 
@@ -121,24 +123,24 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     override fun onPlaybackStateChanged(playbackState: Int) {
         when (playbackState) {
             Player.STATE_IDLE -> {
-                playerState.tryEmit(PlayerStates.STATE_IDLE)
+                _playerState.tryEmit(PlayerState.STATE_IDLE)
             }
 
             Player.STATE_BUFFERING -> {
-                playerState.tryEmit(PlayerStates.STATE_BUFFERING)
+                _playerState.tryEmit(PlayerState.STATE_BUFFERING)
             }
 
             Player.STATE_READY -> {
-                playerState.tryEmit(PlayerStates.STATE_READY)
+                _playerState.tryEmit(PlayerState.STATE_READY)
                 if (player.playWhenReady) {
-                    playerState.tryEmit(PlayerStates.STATE_PLAYING)
+                    _playerState.tryEmit(PlayerState.STATE_PLAYING)
                 } else {
-                    playerState.tryEmit(PlayerStates.STATE_PAUSE)
+                    _playerState.tryEmit(PlayerState.STATE_PAUSE)
                 }
             }
 
             Player.STATE_ENDED -> {
-                playerState.tryEmit(PlayerStates.STATE_END)
+                _playerState.tryEmit(PlayerState.STATE_END)
             }
         }
     }
