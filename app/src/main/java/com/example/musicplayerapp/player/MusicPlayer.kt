@@ -48,7 +48,6 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
      * Sets up the player to start playback of the track at the specified index.
      *
      * @param index The index of the track in the playlist.
-     * @param isTrackPlay If true, playback will start immediately.
      */
     fun setUpTrack(index: Int) {
         if (player.playbackState == Player.STATE_IDLE) player.prepare()

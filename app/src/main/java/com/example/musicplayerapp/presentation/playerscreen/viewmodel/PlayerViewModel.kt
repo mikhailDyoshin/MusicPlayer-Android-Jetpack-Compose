@@ -83,15 +83,9 @@ class PlayerViewModel @Inject constructor(
      */
     private var selectedTrackIndex = 0
 
-    /**
-     * A private Boolean variable to keep track of whether the track selection is automatic
-     * (i.e., due to the completion of a track) or manual.
-     */
-    private var isAutoSwitch: Boolean = true
-
     init {
         _tracks.addAll(
-            getTracksUseCase.execute().map { it ->
+            getTracksUseCase.execute().map {
                 TrackState(
                     trackId = it.trackId,
                     trackName = it.trackName,
@@ -102,8 +96,10 @@ class PlayerViewModel @Inject constructor(
                     state = it.state
                 )
             })
-        player.initPlayer(tracks.toMediaItemList())
-        onTrackSelected(selectedTrackIndex)
+        if (tracks.isNotEmpty()) {
+            player.initPlayer(tracks.toMediaItemList())
+            onTrackSelected(selectedTrackIndex)
+        }
     }
 
     /**
