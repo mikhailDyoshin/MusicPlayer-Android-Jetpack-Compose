@@ -43,7 +43,7 @@ class AudioContentProvider(private val app: Context) {
                 id = 1L,
                 name = Uri.parse(fullFileName).lastPathSegment ?: "No name",
                 artist = "",
-                uri = Uri.parse(fullFileName)
+                uri = uri
             )
         }
     }

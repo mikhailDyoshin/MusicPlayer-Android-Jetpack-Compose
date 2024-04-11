@@ -1,5 +1,7 @@
 package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 
+import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -25,7 +27,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
-    getTracksUseCase: GetTracksUseCase,
+    private val getTracksUseCase: GetTracksUseCase,
     private val player: MusicPlayer
 ) : ViewModel(), MusicPlayerInterface {
 
@@ -123,6 +125,29 @@ class PlayerViewModel @Inject constructor(
             _tracks[index].state = PlayerState.STATE_PLAYING
             commitTrackListUpdate()
             setUpTrack()
+    }
+
+    /**
+     * Loads tracks from content provider
+     */
+    fun getTracks(urisList: List<Uri>) {
+
+        _tracks.addAll(
+            getTracksUseCase.execute(AudioUrisListModel(urisList)).map {
+                Log.d("Music tracks", it.trackUri)
+                TrackState(
+                    trackId = it.trackId,
+                    trackName = it.trackName,
+                    trackUrl = it.trackUri,
+                    trackImage = it.trackImage,
+                    artistName = it.artistName,
+                    isSelected = it.isSelected,
+                    state = it.state
+                )
+            })
+
+        player.initPlayer(tracks.toMediaItemList())
+        onTrackSelected(selectedTrackIndex)
     }
 
     /**

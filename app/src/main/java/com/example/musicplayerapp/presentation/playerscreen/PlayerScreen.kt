@@ -3,10 +3,16 @@ package com.example.musicplayerapp.presentation.playerscreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.example.musicplayerapp.presentation.playerscreen.components.PlayerBottomBar
 import com.example.musicplayerapp.presentation.playerscreen.components.TrackList
 import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
@@ -27,6 +33,7 @@ fun PlayerScreen(
     onPause: () -> Unit,
     onNext: () -> Unit,
     onPrev: () -> Unit,
+    launchActivity: (input: String) -> Unit,
 ) {
 
     Box(
@@ -37,6 +44,16 @@ fun PlayerScreen(
         TrackList(tracks = tracks, onTrackClick = {
             onTrackClick(it)
         })
+        FloatingActionButton(
+            onClick = { launchActivity("audio/*") },
+            modifier = Modifier
+                .wrapContentSize()
+                .zIndex(2f)
+                .align(Alignment.BottomEnd)
+                .padding(end = 20.dp, bottom = 150.dp)
+        ) {
+            Text("+")
+        }
         PlayerBottomBar(
             playbackState = playbackState,
             onSeekBarPositionChanging = { onSeekBarPositionChanging() },
@@ -62,7 +79,16 @@ fun PlayerScreenPreview() {
         TrackState(trackName = "Track 3", artistName = "Android", isSelected = true),
         TrackState(trackName = "Track 4", artistName = "Android", isSelected = false),
         TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    )
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+
+        )
 
     val currentPosition = 50000L
     val trackDuration = 500000L
@@ -80,6 +106,7 @@ fun PlayerScreenPreview() {
         onPlay = {},
         onPause = {},
         onNext = {},
-        onPrev = {}
+        onPrev = {},
+        launchActivity = {}
     )
 }
