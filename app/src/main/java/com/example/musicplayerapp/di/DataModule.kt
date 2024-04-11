@@ -1,6 +1,8 @@
 package com.example.musicplayerapp.di
 
+import android.content.Context
 import com.example.musicplayerapp.data.MusicPlayerRepositoryImpl
+import com.example.musicplayerapp.data.contentProvider.AudioContentProvider
 import com.example.musicplayerapp.domain.repository.MusicPlayerRepository
 import dagger.Module
 import dagger.Provides
@@ -24,4 +26,9 @@ class DataModule {
         return trackRepository
     }
 
+    @Provides
+    @Singleton
+    fun provideAudioContentProvider(context: Context): AudioContentProvider {
+        return AudioContentProvider(context)
+    }
 }

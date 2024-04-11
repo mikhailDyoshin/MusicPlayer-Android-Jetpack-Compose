@@ -1,5 +1,6 @@
 package com.example.musicplayerapp.domain.repository
 
+import com.example.musicplayerapp.domain.models.AudioUrisListModel
 import com.example.musicplayerapp.domain.models.TrackModel
 
 interface MusicPlayerRepository {
@@ -9,6 +10,6 @@ interface MusicPlayerRepository {
      *
      * @return a list of [TrackModel] objects.
      */
-    fun getTrackList(): List<TrackModel>
+    fun getTrackList(audioUrisList: AudioUrisListModel): List<TrackModel>
 
 }

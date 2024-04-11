@@ -4,12 +4,12 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import com.example.musicplayerapp.config.UPDATE_DELAY
+import com.example.musicplayerapp.domain.models.AudioUrisListModel
 import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.MusicPlayer
 import com.example.musicplayerapp.player.MusicPlayerInterface
@@ -85,11 +85,11 @@ class PlayerViewModel @Inject constructor(
 
     init {
         _tracks.addAll(
-            getTracksUseCase.execute().map {
+            getTracksUseCase.execute(AudioUrisListModel()).map {
                 TrackState(
                     trackId = it.trackId,
                     trackName = it.trackName,
-                    trackUrl = it.trackUrl,
+                    trackUrl = it.trackUri,
                     trackImage = it.trackImage,
                     artistName = it.artistName,
                     isSelected = it.isSelected,
