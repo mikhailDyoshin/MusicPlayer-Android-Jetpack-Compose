@@ -3,6 +3,7 @@ package com.example.musicplayerapp.di
 import android.app.Application
 import android.content.Context
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaSession
 import com.example.musicplayerapp.player.MusicPlayer
 import dagger.Module
 import dagger.Provides
@@ -42,15 +43,21 @@ class AppModule {
     }
 
     /**
-     * Provides an instance of [MyPlayer].
+     * Provides an instance of [MusicPlayer].
      * MyPlayer is a custom wrapper class around ExoPlayer.
      *
      * @param player An instance of [ExoPlayer].
-     * @return An instance of [MyPlayer].
+     * @return An instance of [MusicPlayer].
      */
     @Provides
     @Singleton
     fun provideMusicPlayer(player: ExoPlayer): MusicPlayer {
         return MusicPlayer(player)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMediaSession(context: Context, player: ExoPlayer): MediaSession {
+        return MediaSession.Builder(context, player).build()
     }
 }

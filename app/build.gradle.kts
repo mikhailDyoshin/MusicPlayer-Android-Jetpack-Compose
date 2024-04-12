@@ -80,6 +80,9 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.2.1")
     implementation("androidx.media3:media3-exoplayer-dash:1.2.1")
     implementation("androidx.media3:media3-ui:1.2.1")
+
+    // Media session
+    implementation ("androidx.media3:media3-session:1.3.0")
 }
 
 // Allow references to generated code

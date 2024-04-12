@@ -1,13 +1,11 @@
 package com.example.musicplayerapp.player
 
-import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import androidx.media3.common.PlaybackException
-import androidx.media3.common.Tracks
 import javax.inject.Inject
 
 class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Listener {
@@ -54,11 +52,11 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
         player.seekTo(index, 0)
     }
 
-    fun play() {
+    fun playTrack() {
         player.play()
     }
 
-    fun pause() {
+    fun pauseTrack() {
         player.pause()
     }
 

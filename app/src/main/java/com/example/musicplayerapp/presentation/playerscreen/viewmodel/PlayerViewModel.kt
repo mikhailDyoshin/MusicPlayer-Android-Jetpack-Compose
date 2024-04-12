@@ -223,12 +223,12 @@ class PlayerViewModel @Inject constructor(
     }
 
     private fun startPlaying() {
-        player.play()
+        player.playTrack()
         stateUpdater.start()
     }
 
     private fun stopPlaying() {
-        player.pause()
+        player.pauseTrack()
         stateUpdater.stop()
     }
 
