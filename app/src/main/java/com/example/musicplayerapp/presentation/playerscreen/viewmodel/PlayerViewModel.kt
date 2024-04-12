@@ -1,5 +1,7 @@
 package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 
+import android.content.ComponentName
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.State
@@ -10,6 +12,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import com.example.musicplayerapp.config.UPDATE_DELAY
 import com.example.musicplayerapp.domain.models.AudioUrisListModel
 import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
@@ -18,7 +22,9 @@ import com.example.musicplayerapp.player.MusicPlayerInterface
 import com.example.musicplayerapp.player.PlayerState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
+import com.example.musicplayerapp.service.PlaybackService
 import com.example.musicplayerapp.utils.StateUpdater
+import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +33,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
+    context: Context,
     private val getTracksUseCase: GetTracksUseCase,
     private val player: MusicPlayer
 ) : ViewModel(), MusicPlayerInterface {
@@ -70,6 +77,12 @@ class PlayerViewModel @Inject constructor(
         callBack = { updateStateCallback() },
         updatePeriodMillis = UPDATE_DELAY
     )
+
+    private val sessionToken =
+        SessionToken(context, ComponentName(context, PlaybackService::class.java))
+
+    private val controllerFuture =
+        MediaController.Builder(context, sessionToken).buildAsync()
 
     private val sliderIsInChangingState = mutableStateOf(false)
 
@@ -222,13 +235,30 @@ class PlayerViewModel @Inject constructor(
         sliderIsInChangingState.value = false
     }
 
+    private fun playController() {
+        controllerFuture.addListener({
+            val controller = controllerFuture.get()
+            controller.prepare()
+            controller.play()
+        }, MoreExecutors.directExecutor())
+    }
+
+    private fun pauseController() {
+        controllerFuture.addListener({
+            val controller = controllerFuture.get()
+            controller.pause()
+        }, MoreExecutors.directExecutor())
+    }
+
     private fun startPlaying() {
-        player.playTrack()
+//        player.playTrack()
+        playController()
         stateUpdater.start()
     }
 
     private fun stopPlaying() {
-        player.pauseTrack()
+//        player.pauseTrack()
+        pauseController()
         stateUpdater.stop()
     }
 

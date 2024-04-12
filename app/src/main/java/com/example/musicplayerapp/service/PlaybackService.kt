@@ -17,9 +17,13 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.MediaStyleNotificationHelper
 import com.google.common.collect.ImmutableList
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-class PlaybackService @Inject constructor(private val mediaSession: MediaSession): MediaSessionService() {
+@AndroidEntryPoint
+class PlaybackService : MediaSessionService() {
+
+    @Inject lateinit var mediaSession: MediaSession
 
     private lateinit var notificationManager: NotificationManager
     private lateinit var nBuilder: NotificationCompat.Builder
@@ -54,9 +58,7 @@ class PlaybackService @Inject constructor(private val mediaSession: MediaSession
             }
         })
     }
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
-        TODO("Not yet implemented")
-    }
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
     @OptIn(UnstableApi::class)
     @RequiresApi(Build.VERSION_CODES.O)
