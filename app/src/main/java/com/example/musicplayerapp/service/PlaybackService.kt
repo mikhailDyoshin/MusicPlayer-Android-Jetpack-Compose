@@ -10,6 +10,7 @@ import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaNotification
@@ -19,22 +20,30 @@ import androidx.media3.session.MediaStyleNotificationHelper
 import com.google.common.collect.ImmutableList
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlin.math.abs
 
 @AndroidEntryPoint
-class PlaybackService : MediaSessionService() {
+class PlaybackService : MediaSessionService(), Player.Listener {
 
     @Inject lateinit var mediaSession: MediaSession
 
+    private lateinit var player: Player
     private lateinit var notificationManager: NotificationManager
     private lateinit var nBuilder: NotificationCompat.Builder
+
+    private var isPlaying = false
 
     @RequiresApi(Build.VERSION_CODES.O)
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
 
+        player = mediaSession.player
+
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotification(mediaSession)
+
+        player.addListener(this)
 
         this.setMediaNotificationProvider(object : MediaNotification.Provider {
             @RequiresApi(Build.VERSION_CODES.O)
@@ -68,7 +77,7 @@ class PlaybackService : MediaSessionService() {
             NotificationChannel(
                 CHANNEL_ID,
                 "Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_NONE
             )
         )
 
@@ -85,9 +94,86 @@ class PlaybackService : MediaSessionService() {
                     )
             )
 
+        updateNotificationOnPlayPause()
+
     }
 
-    fun updateNotificationOnPlayPause(isPlaying: Boolean) {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        intent?.let {
+            when (it.action) {
+                PlayerNotificationAction.ACTION_SEEK_BACK.actionString -> {
+                    player.seekTo(0)
+                }
+
+                PlayerNotificationAction.ACTION_PLAY.actionString -> {
+                    player.play()
+                }
+
+                PlayerNotificationAction.ACTION_PAUSE.actionString -> {
+                    player.pause()
+                }
+
+                PlayerNotificationAction.ACTION_PREVIOUS.actionString -> {
+//                    player.seekToPrevious()
+                    seekToPrevious()
+                }
+
+                PlayerNotificationAction.ACTION_NEXT.actionString -> {
+//                    player.seekToNext()
+                    seekToNext()
+                }
+            }
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        if (!player.playWhenReady || player.mediaItemCount == 0) {
+            // Stop the service if not playing, continue playing in the background
+            // otherwise.
+            stopSelf()
+        }
+    }
+
+    override fun onPlaybackStateChanged(playbackState: Int) {
+        when (playbackState) {
+            Player.STATE_READY -> {
+                if (player.playWhenReady) {
+                    isPlaying = true
+                    updateNotificationOnPlayPause()
+                } else {
+                    isPlaying = false
+                    updateNotificationOnPlayPause()
+                }
+            }
+
+            Player.STATE_IDLE -> {
+                isPlaying = false
+                updateNotificationOnPlayPause()
+            }
+
+            Player.STATE_ENDED -> {
+                isPlaying = false
+                updateNotificationOnPlayPause()
+            }
+
+            else -> {
+
+            }
+        }
+    }
+
+    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+        if (playWhenReady) {
+            isPlaying = true
+            updateNotificationOnPlayPause()
+        } else {
+            isPlaying = false
+            updateNotificationOnPlayPause()
+        }
+    }
+
+    fun updateNotificationOnPlayPause() {
 
         // Define intents
         val repeatPendingIntent =
@@ -138,6 +224,29 @@ class PlaybackService : MediaSessionService() {
             ) // #2
 
         notificationManager.notify(NOTIFICATION_ID, nBuilder.build())
+    }
+
+    private fun seekToNext() {
+        val currentItemIndex = player.currentMediaItemIndex
+        val totalNumberOfMediaItems = player.mediaItemCount
+
+        val nextItemIndex = modulo(currentItemIndex + 1, totalNumberOfMediaItems)
+
+        player.seekTo(nextItemIndex, 0)
+
+    }
+
+    private fun seekToPrevious() {
+        val currentItemIndex = player.currentMediaItemIndex
+        val totalNumberOfMediaItems = player.mediaItemCount
+
+        val previousItemIndex = modulo(currentItemIndex - 1, totalNumberOfMediaItems)
+
+        player.seekTo(previousItemIndex, 0)
+    }
+
+    private fun modulo(dividend: Int, divider: Int): Int {
+        return abs(dividend % divider)
     }
 
     private fun createActionIntent(action: String): PendingIntent {
