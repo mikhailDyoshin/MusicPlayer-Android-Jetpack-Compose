@@ -10,7 +10,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -29,7 +28,6 @@ import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -109,16 +107,6 @@ class PlayerViewModel @Inject constructor(
     }
 
     /**
-     * Handles track selection.
-     *
-     * @param index The index of the selected track in the track list.
-     */
-    private fun onTrackSelected(index: Int) {
-        updateCurrentTrackPlayingState(index)
-        playSelectedTrack()
-    }
-
-    /**
      * Loads tracks from content provider
      */
     fun getTracks(urisList: List<Uri>) {
@@ -154,6 +142,7 @@ class PlayerViewModel @Inject constructor(
             controller.seekTo(selectedTrackIndex, 0)
             controller.play()
         }, MoreExecutors.directExecutor())
+        stateUpdater.start()
     }
 
     /**
@@ -170,88 +159,6 @@ class PlayerViewModel @Inject constructor(
         val updatedTracksList = _tracks.toList()
         _tracks.clear()
         _tracks.addAll(updatedTracksList)
-    }
-
-    private fun updateStateCallback() {
-        viewModelScope.launch {
-            val playerState = player.playerState.value
-
-            when (playerState) {
-                PlayerState.STATE_PLAYING -> {
-                    _isTrackPlaying.value = true
-                    _playbackState.tryEmit(
-                        value = PlaybackState(
-                            isInChangingState = sliderIsInChangingState.value,
-                            currentPlaybackPosition = player.currentPlaybackPosition,
-                            currentTrackDuration = player.currentTrackDuration
-                        )
-                    )
-                }
-
-                PlayerState.STATE_PAUSE -> {
-                    _isTrackPlaying.value = false
-                    _playbackState.tryEmit(
-                        value = PlaybackState(
-                            isInChangingState = sliderIsInChangingState.value,
-                            currentPlaybackPosition = player.currentPlaybackPosition,
-                            currentTrackDuration = player.currentTrackDuration
-                        )
-                    )
-                }
-
-                PlayerState.STATE_BUFFERING -> {
-                    // Whether a track is playing or not the player's isTrackPlaying-state
-                    // stays the same while buffering
-                    _isTrackPlaying.value = _isTrackPlaying.value
-                }
-
-                PlayerState.STATE_NEXT_TRACK_AUTO -> {
-
-//                    pauseController()
-//                    switchToNextTrack()
-                    if (selectedTrackIndex < tracks.size - 1) {
-                        val index = selectedTrackIndex + 1
-                        _tracks.resetTracks()
-                        selectedTrackIndex = index
-                        _tracks[index].isSelected = true
-                        _tracks[index].state = PlayerState.STATE_PLAYING
-                        commitTrackListUpdate()
-                        controllerFuture.addListener({
-                            val controller = controllerFuture.get()
-//                            controller.seekTo(selectedTrackIndex, 0)
-//            controller.prepare()
-                            controller.play()
-                            val state = controller.playbackState
-                        }, MoreExecutors.directExecutor())
-                    }
-
-                }
-
-                PlayerState.STATE_TRACK_CHANGED_BY_USER -> {
-                    Log.d("MyAudio", "STATE_TRACK_CHANGED_BY_USER")
-                    onTrackSelected(player.currentTrackIndexState.intValue)
-                }
-
-                PlayerState.STATE_END -> {
-//                    _isTrackPlaying.value = false
-//                    stateUpdater.stop()
-                }
-
-                PlayerState.STATE_ERROR -> {
-                    _isTrackPlaying.value = false
-//                    stateUpdater.stop()
-                }
-
-                PlayerState.STATE_READY -> {
-
-                }
-
-                PlayerState.STATE_IDLE -> {
-                    _isTrackPlaying.value = false
-//                    stateUpdater.stop()
-                }
-            }
-        }
     }
 
     private fun updateControllersStateCallback() {
@@ -310,13 +217,16 @@ class PlayerViewModel @Inject constructor(
     }
 
     private fun emitPlaybackState() {
-        _playbackState.tryEmit(
-            value = PlaybackState(
-                isInChangingState = sliderIsInChangingState.value,
-                currentPlaybackPosition = player.currentPlaybackPosition,
-                currentTrackDuration = player.currentTrackDuration
+        controllerFuture.addListener({
+            val controller = controllerFuture.get()
+            _playbackState.tryEmit(
+                value = PlaybackState(
+                    isInChangingState = sliderIsInChangingState.value,
+                    currentPlaybackPosition = controller.currentPosition,
+                    currentTrackDuration = controller.duration
+                )
             )
-        )
+        }, MoreExecutors.directExecutor())
     }
 
     fun putSliderInChangingState() {
@@ -349,7 +259,6 @@ class PlayerViewModel @Inject constructor(
 
     private fun stopPlaying() {
         pauseController()
-        stateUpdater.stop()
     }
 
     override fun onPlayClick() {
@@ -416,14 +325,18 @@ class PlayerViewModel @Inject constructor(
      * @param position The position to seek to.
      */
     override fun onSeekBarPositionChanged(position: Long) {
-        player.seekToPosition(position)
+        controllerFuture.addListener({
+            val controller = controllerFuture.get()
+            controller.seekTo(position)
+        }, MoreExecutors.directExecutor())
     }
 
     /**
-     * Cleans up the media player when the ViewModel is cleared.
+     * Releases the media player and the media controller, stops the StateUpdater when the ViewModel is cleared.
      */
     override fun onCleared() {
         super.onCleared()
+        stateUpdater.stop()
         player.releasePlayer()
         MediaController.releaseFuture(controllerFuture)
     }
