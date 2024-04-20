@@ -16,23 +16,32 @@ class StateUpdater(
 
     private val choreographer = Choreographer.getInstance()
 
-    private fun extendedCallback(frameTimeNanos: Long) {
-        callBack()
-        choreographer.postFrameCallbackDelayed(::extendedCallback, updatePeriodMillis)
+    private var isRunning = false
+
+    private val extendedCallback = object : Choreographer.FrameCallback {
+        override fun doFrame(frameTimeNanos: Long) {
+            callBack()
+            if (isRunning) {
+                choreographer.postFrameCallbackDelayed(this, updatePeriodMillis)
+            }
+        }
     }
 
     /**
      The [start] method starts the loop where client's logic is executed.
      */
     fun start() {
-        choreographer.postFrameCallbackDelayed(::extendedCallback, updatePeriodMillis)
+        if (!isRunning) {
+            isRunning = true
+            choreographer.postFrameCallbackDelayed(extendedCallback, updatePeriodMillis)
+        }
     }
 
     /**
     The [stop] method stops the loop where client's logic is executed.
      */
     fun stop() {
-        choreographer.removeFrameCallback(::extendedCallback)
+        isRunning = false
     }
 
 }

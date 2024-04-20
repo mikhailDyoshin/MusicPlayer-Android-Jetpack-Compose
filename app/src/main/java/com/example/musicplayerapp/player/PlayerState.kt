@@ -39,5 +39,10 @@ enum class PlayerState {
     /**
      * State when the player has moved to the next track.
      */
-    STATE_NEXT_TRACK
+    STATE_NEXT_TRACK_AUTO,
+
+    /**
+     * State when a user changes the current track.
+     */
+    STATE_TRACK_CHANGED_BY_USER
 }

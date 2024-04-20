@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.musicplayerapp.config.UPDATE_DELAY
@@ -74,7 +75,7 @@ class PlayerViewModel @Inject constructor(
      * of the [player]'s state.
      */
     private val stateUpdater = StateUpdater(
-        callBack = { updateStateCallback() },
+        callBack = { updateControllersStateCallback() },
         updatePeriodMillis = UPDATE_DELAY
     )
 
@@ -98,25 +99,6 @@ class PlayerViewModel @Inject constructor(
      */
     private var selectedTrackIndex = 0
 
-    init {
-        _tracks.addAll(
-            getTracksUseCase.execute(AudioUrisListModel()).map {
-                TrackState(
-                    trackId = it.trackId,
-                    trackName = it.trackName,
-                    trackUrl = it.trackUri,
-                    trackImage = it.trackImage,
-                    artistName = it.artistName,
-                    isSelected = it.isSelected,
-                    state = it.state
-                )
-            })
-        if (tracks.isNotEmpty()) {
-            player.initPlayer(tracks.toMediaItemList())
-            onTrackSelected(selectedTrackIndex)
-        }
-    }
-
     /**
      * Converts a list of [TrackState] objects into a mutable list of [MediaItem] objects.
      *
@@ -132,12 +114,8 @@ class PlayerViewModel @Inject constructor(
      * @param index The index of the selected track in the track list.
      */
     private fun onTrackSelected(index: Int) {
-            _tracks.resetTracks()
-            selectedTrackIndex = index
-            _tracks[index].isSelected = true
-            _tracks[index].state = PlayerState.STATE_PLAYING
-            commitTrackListUpdate()
-            setUpTrack()
+        updateCurrentTrackPlayingState(index)
+        playSelectedTrack()
     }
 
     /**
@@ -159,15 +137,23 @@ class PlayerViewModel @Inject constructor(
                 )
             })
 
-        player.initPlayer(tracks.toMediaItemList())
-        onTrackSelected(selectedTrackIndex)
+        if (tracks.isNotEmpty()) {
+            controllerFuture.addListener({
+                val controller = controllerFuture.get()
+                controller.addMediaItems(tracks.toMediaItemList())
+            }, MoreExecutors.directExecutor())
+        }
     }
 
     /**
      * Plays selected track in the list.
      */
-    private fun setUpTrack() {
-        player.setUpTrack(selectedTrackIndex)
+    private fun playSelectedTrack() {
+        controllerFuture.addListener({
+            val controller = controllerFuture.get()
+            controller.seekTo(selectedTrackIndex, 0)
+            controller.play()
+        }, MoreExecutors.directExecutor())
     }
 
     /**
@@ -201,6 +187,7 @@ class PlayerViewModel @Inject constructor(
                         )
                     )
                 }
+
                 PlayerState.STATE_PAUSE -> {
                     _isTrackPlaying.value = false
                     _playbackState.tryEmit(
@@ -211,20 +198,125 @@ class PlayerViewModel @Inject constructor(
                         )
                     )
                 }
+
                 PlayerState.STATE_BUFFERING -> {
                     // Whether a track is playing or not the player's isTrackPlaying-state
                     // stays the same while buffering
                     _isTrackPlaying.value = _isTrackPlaying.value
                 }
-                PlayerState.STATE_NEXT_TRACK -> {
-                        switchToNextTrack()
+
+                PlayerState.STATE_NEXT_TRACK_AUTO -> {
+
+//                    pauseController()
+//                    switchToNextTrack()
+                    if (selectedTrackIndex < tracks.size - 1) {
+                        val index = selectedTrackIndex + 1
+                        _tracks.resetTracks()
+                        selectedTrackIndex = index
+                        _tracks[index].isSelected = true
+                        _tracks[index].state = PlayerState.STATE_PLAYING
+                        commitTrackListUpdate()
+                        controllerFuture.addListener({
+                            val controller = controllerFuture.get()
+//                            controller.seekTo(selectedTrackIndex, 0)
+//            controller.prepare()
+                            controller.play()
+                            val state = controller.playbackState
+                        }, MoreExecutors.directExecutor())
+                    }
+
                 }
-                else -> {
+
+                PlayerState.STATE_TRACK_CHANGED_BY_USER -> {
+                    Log.d("MyAudio", "STATE_TRACK_CHANGED_BY_USER")
+                    onTrackSelected(player.currentTrackIndexState.intValue)
+                }
+
+                PlayerState.STATE_END -> {
+//                    _isTrackPlaying.value = false
+//                    stateUpdater.stop()
+                }
+
+                PlayerState.STATE_ERROR -> {
                     _isTrackPlaying.value = false
-                    stateUpdater.stop()
+//                    stateUpdater.stop()
+                }
+
+                PlayerState.STATE_READY -> {
+
+                }
+
+                PlayerState.STATE_IDLE -> {
+                    _isTrackPlaying.value = false
+//                    stateUpdater.stop()
                 }
             }
         }
+    }
+
+    private fun updateControllersStateCallback() {
+        controllerFuture.addListener({
+            val controller = controllerFuture.get()
+
+            val playerState = player.playerState.value
+
+            val state = controller.playbackState
+
+            when (state) {
+                Player.STATE_READY -> {
+                    if (controller.isPlaying) {
+                        _isTrackPlaying.value = true
+                        emitPlaybackState()
+                        Log.d(MEDIA_CONTROLLER_TAG, "Player is playing")
+                    } else {
+                        _isTrackPlaying.value = false
+                        emitPlaybackState()
+                        Log.d(MEDIA_CONTROLLER_TAG, "Player is paused")
+                    }
+                }
+
+                Player.STATE_ENDED -> {
+                    Log.d(MEDIA_CONTROLLER_TAG, "Playlist is ended")
+                }
+
+                Player.STATE_BUFFERING -> {
+
+                }
+
+                Player.STATE_IDLE -> {
+                    Log.d(MEDIA_CONTROLLER_TAG, "Player is idle")
+                }
+            }
+
+            when (playerState) {
+                PlayerState.STATE_NEXT_TRACK_AUTO -> {
+                    updateCurrentTrackPlayingState(controller.currentMediaItemIndex)
+                }
+
+                else -> {
+
+                }
+            }
+
+        }, MoreExecutors.directExecutor())
+    }
+
+    private fun updateCurrentTrackPlayingState(index: Int) {
+        _tracks.resetTracks()
+        selectedTrackIndex = index
+        _tracks[index].isSelected = true
+        _tracks[index].state = PlayerState.STATE_PLAYING
+        commitTrackListUpdate()
+    }
+
+    private fun emitPlaybackState() {
+        _playbackState.tryEmit(
+            value = PlaybackState(
+                isInChangingState = sliderIsInChangingState.value,
+                currentPlaybackPosition = player.currentPlaybackPosition,
+                currentTrackDuration = player.currentTrackDuration
+            )
+        )
     }
 
     fun putSliderInChangingState() {
@@ -251,21 +343,13 @@ class PlayerViewModel @Inject constructor(
     }
 
     private fun startPlaying() {
-//        player.playTrack()
         playController()
         stateUpdater.start()
     }
 
     private fun stopPlaying() {
-//        player.pauseTrack()
         pauseController()
         stateUpdater.stop()
-    }
-
-    private fun switchToNextTrack() {
-        if (selectedTrackIndex < tracks.size - 1) {
-            onTrackSelected(selectedTrackIndex + 1)
-        }
     }
 
     override fun onPlayClick() {
@@ -281,12 +365,18 @@ class PlayerViewModel @Inject constructor(
      * Switches to the previous track if one exists.
      */
     override fun onPreviousClick() {
-        if (selectedTrackIndex > 0) {
-            onTrackSelected(selectedTrackIndex - 1)
-        }
-        if (isTrackPlaying.value) {
-            startPlaying()
-        }
+        controllerFuture.addListener({
+            val controller = controllerFuture.get()
+
+            if (selectedTrackIndex > 0) {
+                updateCurrentTrackPlayingState(selectedTrackIndex - 1)
+            }
+            if (controller.isPlaying) {
+                playSelectedTrack()
+            }
+
+        }, MoreExecutors.directExecutor())
+
     }
 
     /**
@@ -294,10 +384,18 @@ class PlayerViewModel @Inject constructor(
      * Switches to the next track in the list if one exists.
      */
     override fun onNextClick() {
-        switchToNextTrack()
-        if (isTrackPlaying.value) {
-            startPlaying()
-        }
+        controllerFuture.addListener({
+            val controller = controllerFuture.get()
+
+            if (selectedTrackIndex < tracks.size - 1) {
+                updateCurrentTrackPlayingState(selectedTrackIndex + 1)
+            }
+
+            if (controller.isPlaying) {
+                playSelectedTrack()
+            }
+
+        }, MoreExecutors.directExecutor())
     }
 
     /**
@@ -307,8 +405,8 @@ class PlayerViewModel @Inject constructor(
      * @param track The track that was clicked.
      */
     override fun onTrackClick(track: TrackState) {
-        onTrackSelected(tracks.indexOf(track))
-        startPlaying()
+        updateCurrentTrackPlayingState(tracks.indexOf(track))
+        playSelectedTrack()
     }
 
     /**
@@ -327,5 +425,10 @@ class PlayerViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         player.releasePlayer()
+        MediaController.releaseFuture(controllerFuture)
+    }
+
+    companion object {
+        const val MEDIA_CONTROLLER_TAG = "My media-controller"
     }
 }

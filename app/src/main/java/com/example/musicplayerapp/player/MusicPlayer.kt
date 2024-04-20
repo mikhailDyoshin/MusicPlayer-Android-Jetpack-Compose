@@ -1,5 +1,9 @@
 package com.example.musicplayerapp.player
 
+import android.util.Log
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -16,6 +20,13 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     private val _playerState = MutableStateFlow(PlayerState.STATE_IDLE)
 
     val playerState: StateFlow<PlayerState> get() = _playerState
+
+    /**
+     * A state that stores the index of the current track
+     */
+    private val _currentTrackIndexState = mutableIntStateOf(0)
+
+    val currentTrackIndexState = _currentTrackIndexState
 
     /**
      * The current playback position in milliseconds. If the player's position
@@ -36,9 +47,13 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
      *
      * @param trackList The list of media items to play.
      */
-    fun initPlayer(trackList: MutableList<MediaItem>) {
+
+    init {
+        initPlayer()
+    }
+    private fun initPlayer() {
         player.addListener(this)
-        player.setMediaItems(trackList)
+//        player.setMediaItems(trackList)
         player.prepare()
     }
 
@@ -109,8 +124,18 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
      */
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         super.onMediaItemTransition(mediaItem, reason)
-        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
-            _playerState.tryEmit(PlayerState.STATE_NEXT_TRACK)
+        when (reason) {
+            Player.MEDIA_ITEM_TRANSITION_REASON_AUTO -> {
+                _playerState.tryEmit(PlayerState.STATE_NEXT_TRACK_AUTO)
+
+            }
+            Player.MEDIA_ITEM_TRANSITION_REASON_SEEK -> {
+                _currentTrackIndexState.intValue = player.currentMediaItemIndex
+                _playerState.tryEmit(PlayerState.STATE_TRACK_CHANGED_BY_USER)
+            }
+            else -> {
+
+            }
         }
     }
 
