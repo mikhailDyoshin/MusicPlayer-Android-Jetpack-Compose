@@ -107,15 +107,15 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
      * emits the STATE_PLAYING or STATE_PAUSE state to the playerState flow
      * depending on the new playWhenReady state and the current playback state.
      */
-    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-        if (player.playbackState == Player.STATE_READY) {
-            if (playWhenReady) {
-                _playerState.tryEmit(PlayerState.STATE_PLAYING)
-            } else {
-                _playerState.tryEmit(PlayerState.STATE_PAUSE)
-            }
-        }
-    }
+//    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+//        if (player.playbackState == Player.STATE_READY) {
+//            if (playWhenReady) {
+//                _playerState.tryEmit(PlayerState.STATE_PLAYING)
+//            } else {
+//                _playerState.tryEmit(PlayerState.STATE_PAUSE)
+//            }
+//        }
+//    }
 
     /**
      * Called when the player transitions to a new media item. This implementation
@@ -130,42 +130,46 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
 
             }
             Player.MEDIA_ITEM_TRANSITION_REASON_SEEK -> {
-                _currentTrackIndexState.intValue = player.currentMediaItemIndex
                 _playerState.tryEmit(PlayerState.STATE_TRACK_CHANGED_BY_USER)
             }
-            else -> {
 
+            Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED -> {
+                _playerState.tryEmit(PlayerState.PLAYLIST_CHANGED)
+            }
+
+            Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT -> {
+                _playerState.tryEmit(PlayerState.TRANSITION_REASON_REPEAT)
             }
         }
     }
 
-    /**
-     * Called when the player's playback state changes. This implementation emits
-     * a state to the playerState flow corresponding to the new playback state.
-     */
-    override fun onPlaybackStateChanged(playbackState: Int) {
-        when (playbackState) {
-            Player.STATE_IDLE -> {
-                _playerState.tryEmit(PlayerState.STATE_IDLE)
-            }
-
-            Player.STATE_BUFFERING -> {
-                _playerState.tryEmit(PlayerState.STATE_BUFFERING)
-            }
-
-            Player.STATE_READY -> {
-                _playerState.tryEmit(PlayerState.STATE_READY)
-                if (player.playWhenReady) {
-                    _playerState.tryEmit(PlayerState.STATE_PLAYING)
-                } else {
-                    _playerState.tryEmit(PlayerState.STATE_PAUSE)
-                }
-            }
-
-            Player.STATE_ENDED -> {
-                _playerState.tryEmit(PlayerState.STATE_END)
-            }
-        }
-    }
+//    /**
+//     * Called when the player's playback state changes. This implementation emits
+//     * a state to the playerState flow corresponding to the new playback state.
+//     */
+//    override fun onPlaybackStateChanged(playbackState: Int) {
+//        when (playbackState) {
+//            Player.STATE_IDLE -> {
+//                _playerState.tryEmit(PlayerState.STATE_IDLE)
+//            }
+//
+//            Player.STATE_BUFFERING -> {
+//                _playerState.tryEmit(PlayerState.STATE_BUFFERING)
+//            }
+//
+//            Player.STATE_READY -> {
+//                _playerState.tryEmit(PlayerState.STATE_READY)
+//                if (player.playWhenReady) {
+//                    _playerState.tryEmit(PlayerState.STATE_PLAYING)
+//                } else {
+//                    _playerState.tryEmit(PlayerState.STATE_PAUSE)
+//                }
+//            }
+//
+//            Player.STATE_ENDED -> {
+//                _playerState.tryEmit(PlayerState.STATE_END)
+//            }
+//        }
+//    }
 
 }

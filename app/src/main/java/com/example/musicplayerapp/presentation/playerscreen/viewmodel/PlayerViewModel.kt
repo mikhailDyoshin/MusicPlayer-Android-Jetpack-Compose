@@ -121,7 +121,6 @@ class PlayerViewModel @Inject constructor(
                     trackImage = it.trackImage,
                     artistName = it.artistName,
                     isSelected = it.isSelected,
-                    state = it.state
                 )
             })
 
@@ -151,7 +150,6 @@ class PlayerViewModel @Inject constructor(
     private fun MutableList<TrackState>.resetTracks() {
         this.forEach { track ->
             track.isSelected = false
-            track.state = PlayerState.STATE_IDLE
         }
     }
 
@@ -187,7 +185,7 @@ class PlayerViewModel @Inject constructor(
                 }
 
                 Player.STATE_BUFFERING -> {
-
+                    Log.d(MEDIA_CONTROLLER_TAG, "Player is buffering")
                 }
 
                 Player.STATE_IDLE -> {
@@ -200,8 +198,16 @@ class PlayerViewModel @Inject constructor(
                     updateCurrentTrackPlayingState(controller.currentMediaItemIndex)
                 }
 
-                else -> {
+                PlayerState.STATE_TRACK_CHANGED_BY_USER -> {
+                    updateCurrentTrackPlayingState(controller.currentMediaItemIndex)
+                }
 
+                PlayerState.PLAYLIST_CHANGED -> {}
+                PlayerState.TRANSITION_REASON_REPEAT -> {}
+
+                PlayerState.STATE_IDLE -> { }
+                PlayerState.STATE_ERROR -> {
+                    Log.d(MEDIA_CONTROLLER_TAG, "Player error")
                 }
             }
 
@@ -212,7 +218,6 @@ class PlayerViewModel @Inject constructor(
         _tracks.resetTracks()
         selectedTrackIndex = index
         _tracks[index].isSelected = true
-        _tracks[index].state = PlayerState.STATE_PLAYING
         commitTrackListUpdate()
     }
 

@@ -9,5 +9,4 @@ data class TrackState(
     val trackImage: Int = 0,
     val artistName: String = "",
     var isSelected: Boolean = false,
-    var state: PlayerState = PlayerState.STATE_IDLE
 )
