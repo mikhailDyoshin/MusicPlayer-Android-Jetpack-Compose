@@ -46,9 +46,8 @@ fun TrackProgressSlider(
     var currentPlaybackTime by remember { mutableStateOf("") }
 
     Column(
-        modifier = modifier.background(
-            color = Color.White,
-        ), verticalArrangement = Arrangement.Center
+        modifier = modifier,
+        verticalArrangement = Arrangement.Center
     ) {
         Slider(
             value = if (inChangingState) currentPosTemp else currentMediaProgress,
@@ -109,6 +108,6 @@ fun TrackProgressSliderPreview() {
         playbackState = flow,
         onSeekBarPositionChanging = {},
         onSeekBarPositionChanged = {},
-//        modifier = Modifier.background(color = Color.White)
+        modifier = Modifier.background(color = Color.White)
     )
 }

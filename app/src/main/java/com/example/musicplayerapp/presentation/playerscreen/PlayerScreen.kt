@@ -50,7 +50,7 @@ fun PlayerScreen(
                 .wrapContentSize()
                 .zIndex(2f)
                 .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 150.dp)
+                .padding(end = 20.dp, bottom = 170.dp)
         ) {
             Text("+")
         }
@@ -70,7 +70,7 @@ fun PlayerScreen(
 }
 
 
-@Preview
+@Preview(showSystemUi = true)
 @Composable
 fun PlayerScreenPreview() {
     val trackList = listOf(

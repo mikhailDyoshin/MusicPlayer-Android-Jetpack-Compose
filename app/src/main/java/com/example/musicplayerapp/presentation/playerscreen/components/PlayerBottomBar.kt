@@ -1,10 +1,13 @@
 package com.example.musicplayerapp.presentation.playerscreen.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
+import com.example.musicplayerapp.ui.theme.ControlsBarBackground
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -26,7 +29,7 @@ fun PlayerBottomBar(
 
 ) {
 
-    Column(modifier = modifier) {
+    Column(modifier = modifier.background(color = ControlsBarBackground)) {
         TrackProgressSlider(
             playbackState = playbackState,
             onSeekBarPositionChanging = { onSeekBarPositionChanging() },

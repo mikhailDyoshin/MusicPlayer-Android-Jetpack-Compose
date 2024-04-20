@@ -31,8 +31,8 @@ fun PlayerControlsBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(color = Color.White)
-            .padding(vertical = 5.dp),
+            .background(color = Color.Transparent)
+            .padding(top = 5.dp, bottom = 20.dp),
         horizontalArrangement = Arrangement.Center
 
     ) {
@@ -78,7 +78,8 @@ fun PlayerControlsBarOnPausePreview() {
         onPlay = { /*TODO*/ },
         onPause = { /*TODO*/ },
         onNext = { /*TODO*/ },
-        onPrev = { /*TODO*/ }
+        onPrev = { /*TODO*/ },
+        modifier = Modifier.background(color = Color.White)
     )
 }
 
@@ -90,6 +91,7 @@ fun PlayerControlsBarPlayingPreview() {
         onPlay = { /*TODO*/ },
         onPause = { /*TODO*/ },
         onNext = { /*TODO*/ },
-        onPrev = { /*TODO*/ }
+        onPrev = { /*TODO*/ },
+        modifier = Modifier.background(color = Color.White)
     )
 }
