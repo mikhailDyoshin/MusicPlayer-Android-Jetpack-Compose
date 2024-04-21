@@ -96,7 +96,7 @@ class PlayerViewModel @Inject constructor(
     /**
      * A private property that holds the index of the currently selected track.
      */
-    private var selectedTrackIndex = 0
+//    private var selectedTrackIndex = 0
 
     /**
      * Converts a list of [TrackState] objects into a mutable list of [MediaItem] objects.
@@ -136,11 +136,19 @@ class PlayerViewModel @Inject constructor(
     /**
      * Plays selected track in the list.
      */
-    private fun playSelectedTrack() {
+//    private fun playSelectedTrack() {
+//        controllerFuture.addListener({
+//            val controller = controllerFuture.get()
+//            controller.seekTo(selectedTrackIndex, 0)
+//            controller.play()
+//        }, MoreExecutors.directExecutor())
+//        stateUpdater.start()
+//    }
+
+    private fun seekToSelectedTrack(selectedTrackIndex: Int) {
         controllerFuture.addListener({
             val controller = controllerFuture.get()
             controller.seekTo(selectedTrackIndex, 0)
-            controller.play()
         }, MoreExecutors.directExecutor())
         stateUpdater.start()
     }
@@ -217,7 +225,6 @@ class PlayerViewModel @Inject constructor(
 
     private fun updateCurrentTrackPlayingState(index: Int) {
         _tracks.resetTracks()
-        selectedTrackIndex = index
         _tracks[index].isSelected = true
         commitTrackListUpdate()
     }
@@ -287,11 +294,14 @@ class PlayerViewModel @Inject constructor(
             val totalNumberOfMediaItems = controller.mediaItemCount
             val previousItemIndex = modulo(currentItemIndex - 1, totalNumberOfMediaItems)
 
-//            if (selectedTrackIndex > 0) {
+            // Update the UI: change tracks' list state
             updateCurrentTrackPlayingState(previousItemIndex)
-//            }
+
+            // Use the player to seek to the selected track
+            seekToSelectedTrack(previousItemIndex)
+
             if (controller.isPlaying) {
-                playSelectedTrack()
+                playController()
             }
 
         }, MoreExecutors.directExecutor())
@@ -310,12 +320,13 @@ class PlayerViewModel @Inject constructor(
             val totalNumberOfMediaItems = controller.mediaItemCount
             val nextItemIndex = modulo(currentItemIndex + 1, totalNumberOfMediaItems)
 
-//            if (selectedTrackIndex < tracks.size - 1) {
             updateCurrentTrackPlayingState(nextItemIndex)
-//            }
 
+            Log.d("Track Switch", "$currentItemIndex, $nextItemIndex")
+
+            seekToSelectedTrack(nextItemIndex)
             if (controller.isPlaying) {
-                playSelectedTrack()
+                playController()
             }
 
         }, MoreExecutors.directExecutor())
@@ -328,8 +339,10 @@ class PlayerViewModel @Inject constructor(
      * @param track The track that was clicked.
      */
     override fun onTrackClick(track: TrackState) {
-        updateCurrentTrackPlayingState(tracks.indexOf(track))
-        playSelectedTrack()
+        val selectedTrackIndex = tracks.indexOf(track)
+        updateCurrentTrackPlayingState(selectedTrackIndex)
+        seekToSelectedTrack(selectedTrackIndex)
+        playController()
     }
 
     /**
