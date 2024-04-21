@@ -5,10 +5,8 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -87,13 +85,6 @@ class PlayerViewModel @Inject constructor(
     private val sliderIsInChangingState = mutableStateOf(false)
 
     /**
-     * A public property backed by mutable state that holds the currently selected [TrackState].
-     * It can only be set within the [PlayerViewModel] class.
-     */
-    var selectedTrack: TrackState? by mutableStateOf(null)
-        private set
-
-    /**
      * A private property that holds the index of the currently selected track.
      */
 //    private var selectedTrackIndex = 0
@@ -112,38 +103,27 @@ class PlayerViewModel @Inject constructor(
      */
     fun getTracks(urisList: List<Uri>) {
 
-        _tracks.addAll(
-            getTracksUseCase.execute(AudioUrisListModel(urisList)).map {
-                Log.d("Music tracks", it.trackUri)
-                TrackState(
-                    trackId = it.trackId,
-                    trackName = it.trackName,
-                    trackUrl = it.trackUri,
-                    trackImage = it.trackImage,
-                    artistName = it.artistName,
-                    isSelected = it.isSelected,
-                )
-            })
+        val newTracks = getTracksUseCase.execute(AudioUrisListModel(urisList)).map {
+            Log.d("Music tracks", it.trackUri)
+            TrackState(
+                trackId = it.trackId,
+                trackName = it.trackName,
+                trackUrl = it.trackUri,
+                trackImage = it.trackImage,
+                artistName = it.artistName,
+                isSelected = it.isSelected,
+            )
+        }
+
+        _tracks.addAll(newTracks)
 
         if (tracks.isNotEmpty()) {
             controllerFuture.addListener({
                 val controller = controllerFuture.get()
-                controller.addMediaItems(tracks.toMediaItemList())
+                controller.addMediaItems(newTracks.toMediaItemList())
             }, MoreExecutors.directExecutor())
         }
     }
-
-    /**
-     * Plays selected track in the list.
-     */
-//    private fun playSelectedTrack() {
-//        controllerFuture.addListener({
-//            val controller = controllerFuture.get()
-//            controller.seekTo(selectedTrackIndex, 0)
-//            controller.play()
-//        }, MoreExecutors.directExecutor())
-//        stateUpdater.start()
-//    }
 
     private fun seekToSelectedTrack(selectedTrackIndex: Int) {
         controllerFuture.addListener({
@@ -190,6 +170,8 @@ class PlayerViewModel @Inject constructor(
                 }
 
                 Player.STATE_ENDED -> {
+                    _isTrackPlaying.value = false
+                    pauseController()
                     Log.d(MEDIA_CONTROLLER_TAG, "Playlist is ended")
                 }
 
@@ -321,8 +303,6 @@ class PlayerViewModel @Inject constructor(
             val nextItemIndex = modulo(currentItemIndex + 1, totalNumberOfMediaItems)
 
             updateCurrentTrackPlayingState(nextItemIndex)
-
-            Log.d("Track Switch", "$currentItemIndex, $nextItemIndex")
 
             seekToSelectedTrack(nextItemIndex)
             if (controller.isPlaying) {
