@@ -17,6 +17,7 @@ import androidx.media3.session.MediaNotification
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.MediaStyleNotificationHelper
+import com.example.musicplayerapp.utils.modulo
 import com.google.common.collect.ImmutableList
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -243,10 +244,6 @@ class PlaybackService : MediaSessionService(), Player.Listener {
         val previousItemIndex = modulo(currentItemIndex - 1, totalNumberOfMediaItems)
 
         player.seekTo(previousItemIndex, 0)
-    }
-
-    private fun modulo(dividend: Int, divider: Int): Int {
-        return abs(dividend % divider)
     }
 
     private fun createActionIntent(action: String): PendingIntent {

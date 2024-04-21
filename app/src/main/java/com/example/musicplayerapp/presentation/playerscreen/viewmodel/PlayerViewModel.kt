@@ -24,6 +24,7 @@ import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
 import com.example.musicplayerapp.service.PlaybackService
 import com.example.musicplayerapp.utils.StateUpdater
+import com.example.musicplayerapp.utils.modulo
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -205,7 +206,7 @@ class PlayerViewModel @Inject constructor(
                 PlayerState.PLAYLIST_CHANGED -> {}
                 PlayerState.TRANSITION_REASON_REPEAT -> {}
 
-                PlayerState.STATE_IDLE -> { }
+                PlayerState.STATE_IDLE -> {}
                 PlayerState.STATE_ERROR -> {
                     Log.d(MEDIA_CONTROLLER_TAG, "Player error")
                 }
@@ -282,9 +283,13 @@ class PlayerViewModel @Inject constructor(
         controllerFuture.addListener({
             val controller = controllerFuture.get()
 
-            if (selectedTrackIndex > 0) {
-                updateCurrentTrackPlayingState(selectedTrackIndex - 1)
-            }
+            val currentItemIndex = controller.currentMediaItemIndex
+            val totalNumberOfMediaItems = controller.mediaItemCount
+            val previousItemIndex = modulo(currentItemIndex - 1, totalNumberOfMediaItems)
+
+//            if (selectedTrackIndex > 0) {
+            updateCurrentTrackPlayingState(previousItemIndex)
+//            }
             if (controller.isPlaying) {
                 playSelectedTrack()
             }
@@ -301,9 +306,13 @@ class PlayerViewModel @Inject constructor(
         controllerFuture.addListener({
             val controller = controllerFuture.get()
 
-            if (selectedTrackIndex < tracks.size - 1) {
-                updateCurrentTrackPlayingState(selectedTrackIndex + 1)
-            }
+            val currentItemIndex = controller.currentMediaItemIndex
+            val totalNumberOfMediaItems = controller.mediaItemCount
+            val nextItemIndex = modulo(currentItemIndex + 1, totalNumberOfMediaItems)
+
+//            if (selectedTrackIndex < tracks.size - 1) {
+            updateCurrentTrackPlayingState(nextItemIndex)
+//            }
 
             if (controller.isPlaying) {
                 playSelectedTrack()
