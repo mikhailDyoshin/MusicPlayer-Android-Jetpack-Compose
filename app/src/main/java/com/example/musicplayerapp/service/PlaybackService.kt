@@ -1,16 +1,20 @@
 package com.example.musicplayerapp.service
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.Player
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaNotification
@@ -26,7 +30,8 @@ import kotlin.math.abs
 @AndroidEntryPoint
 class PlaybackService : MediaSessionService(), Player.Listener {
 
-    @Inject lateinit var mediaSession: MediaSession
+    @Inject
+    lateinit var mediaSession: MediaSession
 
     private lateinit var player: Player
     private lateinit var notificationManager: NotificationManager
@@ -67,8 +72,12 @@ class PlaybackService : MediaSessionService(), Player.Listener {
                 TODO("Not yet implemented")
             }
         })
+
+        Log.d(PLAYBACK_SERVICE_TAG, "Service was created")
     }
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
+
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
+        mediaSession
 
     @OptIn(UnstableApi::class)
     @RequiresApi(Build.VERSION_CODES.O)
@@ -115,12 +124,10 @@ class PlaybackService : MediaSessionService(), Player.Listener {
                 }
 
                 PlayerNotificationAction.ACTION_PREVIOUS.actionString -> {
-//                    player.seekToPrevious()
                     seekToPrevious()
                 }
 
                 PlayerNotificationAction.ACTION_NEXT.actionString -> {
-//                    player.seekToNext()
                     seekToNext()
                 }
             }
@@ -128,12 +135,34 @@ class PlaybackService : MediaSessionService(), Player.Listener {
         return super.onStartCommand(intent, flags, startId)
     }
 
+    @OptIn(UnstableApi::class)
     override fun onTaskRemoved(rootIntent: Intent?) {
         if (!player.playWhenReady || player.mediaItemCount == 0) {
             // Stop the service if not playing, continue playing in the background
             // otherwise.
             stopSelf()
+            if (!player.playWhenReady) {
+                Log.d(PLAYBACK_SERVICE_TAG, "Service was stopped: playWhenReady = false")
+            }
+
+            if (player.mediaItemCount == 0) {
+                Log.d(PLAYBACK_SERVICE_TAG, "Service was stopped: no media items")
+            }
+
+            notificationManager.cancel(NOTIFICATION_ID)
         }
+
+        Log.d(PLAYBACK_SERVICE_TAG, "App was closed")
+    }
+
+    @OptIn(UnstableApi::class)
+    override fun onDestroy() {
+        mediaSession.run {
+            player.release()
+            release()
+        }
+        super.onDestroy()
+        Log.d(PLAYBACK_SERVICE_TAG, "Service is being destroyed")
     }
 
     override fun onPlaybackStateChanged(playbackState: Int) {
@@ -158,7 +187,7 @@ class PlaybackService : MediaSessionService(), Player.Listener {
                 updateNotificationOnPlayPause()
             }
 
-            else -> {
+            Player.STATE_BUFFERING -> {
 
             }
         }
@@ -174,7 +203,7 @@ class PlaybackService : MediaSessionService(), Player.Listener {
         }
     }
 
-    fun updateNotificationOnPlayPause() {
+    private fun updateNotificationOnPlayPause() {
 
         // Define intents
         val repeatPendingIntent =
@@ -258,6 +287,7 @@ class PlaybackService : MediaSessionService(), Player.Listener {
     companion object {
         private const val NOTIFICATION_ID = 123
         private const val CHANNEL_ID = "PlaybackServiceChannel"
+        private const val PLAYBACK_SERVICE_TAG = "My playback service"
     }
 
     enum class PlayerNotificationAction(val actionString: String) {

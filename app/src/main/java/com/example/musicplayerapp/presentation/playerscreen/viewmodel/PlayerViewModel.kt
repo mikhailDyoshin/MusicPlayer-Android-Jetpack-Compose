@@ -353,11 +353,15 @@ class PlayerViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         stateUpdater.stop()
-        player.releasePlayer()
-        MediaController.releaseFuture(controllerFuture)
+        if (!_isTrackPlaying.value) {
+            player.releasePlayer()
+            MediaController.releaseFuture(controllerFuture)
+        }
+        Log.d(VM_TAG, "View-model is cleared")
     }
 
     companion object {
         const val MEDIA_CONTROLLER_TAG = "My media-controller"
+        const val VM_TAG = "PlayerVM"
     }
 }
