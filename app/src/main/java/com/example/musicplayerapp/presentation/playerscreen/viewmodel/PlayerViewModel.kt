@@ -67,6 +67,10 @@ class PlayerViewModel @Inject constructor(
      */
     val isTrackPlaying: State<Boolean> = _isTrackPlaying
 
+    private val _isBottomBarDisplayed = mutableStateOf(false)
+
+    val isBottomBarDisplayed = _isBottomBarDisplayed
+
     /**
      * The [stateUpdater] is used to start and stop updates (which happens after each frame)
      * of the [player]'s state.
@@ -319,6 +323,11 @@ class PlayerViewModel @Inject constructor(
      * @param track The track that was clicked.
      */
     override fun onTrackClick(track: TrackState) {
+
+        if (!_isBottomBarDisplayed.value) {
+            _isBottomBarDisplayed.value = true
+        }
+
         val selectedTrackIndex = tracks.indexOf(track)
         updateCurrentTrackPlayingState(selectedTrackIndex)
         seekToSelectedTrack(selectedTrackIndex)

@@ -2,6 +2,7 @@ package com.example.musicplayerapp.presentation.playerscreen.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,10 +23,10 @@ fun TrackList(
 
     LazyColumn(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .padding(top = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top
     ) {
         items(tracks) {
             TrackListItem(track = it, onTrackClick = { onTrackClick(it) })

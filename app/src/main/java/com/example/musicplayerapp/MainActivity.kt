@@ -47,6 +47,7 @@ class MainActivity : ComponentActivity() {
                         tracks = viewModel.tracks,
                         playbackState = viewModel.playbackState,
                         onTrackClick = { viewModel.onTrackClick(it) },
+                        isBottomBarDisplayed = viewModel.isBottomBarDisplayed.value,
                         isPlaying = viewModel.isTrackPlaying.value,
                         onSeekBarPositionChanged = { currentProgress ->
                             viewModel.pullSliderFromChangingState()

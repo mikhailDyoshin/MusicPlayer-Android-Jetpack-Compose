@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 @Composable
 fun PlayerScreen(
     tracks: List<TrackState>,
+    isBottomBarDisplayed: Boolean,
     isPlaying: Boolean,
     playbackState: StateFlow<PlaybackState>,
     onTrackClick: (track: TrackState) -> Unit,
@@ -50,23 +51,24 @@ fun PlayerScreen(
                 .wrapContentSize()
                 .zIndex(2f)
                 .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 170.dp)
+                .padding(end = 20.dp, bottom = if (isBottomBarDisplayed) 170.dp else 20.dp)
         ) {
             Text("+")
         }
-        PlayerBottomBar(
-            playbackState = playbackState,
-            onSeekBarPositionChanging = { onSeekBarPositionChanging() },
-            onSeekBarPositionChanged = { onSeekBarPositionChanged(it) },
-            isPlaying = isPlaying,
-            onPlay = { onPlay() },
-            onPause = { onPause() },
-            onNext = { onNext() },
-            onPrev = { onPrev() },
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+        if (isBottomBarDisplayed) {
+            PlayerBottomBar(
+                playbackState = playbackState,
+                onSeekBarPositionChanging = { onSeekBarPositionChanging() },
+                onSeekBarPositionChanged = { onSeekBarPositionChanged(it) },
+                isPlaying = isPlaying,
+                onPlay = { onPlay() },
+                onPause = { onPause() },
+                onNext = { onNext() },
+                onPrev = { onPrev() },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
     }
-
 }
 
 
@@ -98,7 +100,50 @@ fun PlayerScreenPreview() {
 
     PlayerScreen(
         tracks = trackList,
+        isBottomBarDisplayed = false,
         isPlaying = false,
+        playbackState = flow,
+        onTrackClick = {},
+        onSeekBarPositionChanged = {},
+        onSeekBarPositionChanging = {},
+        onPlay = {},
+        onPause = {},
+        onNext = {},
+        onPrev = {},
+        launchActivity = {}
+    )
+}
+
+@Preview(showSystemUi = true)
+@Composable
+fun PlayerScreenPlayingPreview() {
+    val trackList = listOf(
+        TrackState(trackName = "Track 1", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 2", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 3", artistName = "Android", isSelected = true),
+        TrackState(trackName = "Track 4", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+
+        )
+
+    val currentPosition = 50000L
+    val trackDuration = 500000L
+
+    val mutableFlow = MutableStateFlow(PlaybackState(false, currentPosition, trackDuration))
+    val flow: StateFlow<PlaybackState> = mutableFlow
+
+    PlayerScreen(
+        tracks = trackList,
+        isBottomBarDisplayed = true,
+        isPlaying = true,
         playbackState = flow,
         onTrackClick = {},
         onSeekBarPositionChanged = {},
