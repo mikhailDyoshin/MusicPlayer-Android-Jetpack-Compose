@@ -1,6 +1,5 @@
 package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 
-import android.content.ComponentName
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -9,21 +8,15 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
 import com.example.musicplayerapp.config.UPDATE_DELAY
+import com.example.musicplayerapp.controller.PlayerController
 import com.example.musicplayerapp.domain.models.AudioUrisListModel
 import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.MusicPlayer
 import com.example.musicplayerapp.player.MusicPlayerInterface
-import com.example.musicplayerapp.player.PlayerState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
-import com.example.musicplayerapp.service.PlaybackService
 import com.example.musicplayerapp.utils.StateUpdater
-import com.example.musicplayerapp.utils.modulo
-import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -76,15 +69,14 @@ class PlayerViewModel @Inject constructor(
      * of the [player]'s state.
      */
     private val stateUpdater = StateUpdater(
-        callBack = { updateControllersStateCallback() },
+        callBack = {
+            checkOutControllerState()
+            checkoutPlayerState()
+        },
         updatePeriodMillis = UPDATE_DELAY
     )
 
-    private val sessionToken =
-        SessionToken(context, ComponentName(context, PlaybackService::class.java))
-
-    private val controllerFuture =
-        MediaController.Builder(context, sessionToken).buildAsync()
+    private val playerController = PlayerController(context, player)
 
     private val sliderIsInChangingState = mutableStateOf(false)
 
@@ -122,18 +114,12 @@ class PlayerViewModel @Inject constructor(
         _tracks.addAll(newTracks)
 
         if (tracks.isNotEmpty()) {
-            controllerFuture.addListener({
-                val controller = controllerFuture.get()
-                controller.addMediaItems(newTracks.toMediaItemList())
-            }, MoreExecutors.directExecutor())
+            playerController.addTracks(newTracks.toMediaItemList())
         }
     }
 
     private fun seekToSelectedTrack(selectedTrackIndex: Int) {
-        controllerFuture.addListener({
-            val controller = controllerFuture.get()
-            controller.seekTo(selectedTrackIndex, 0)
-        }, MoreExecutors.directExecutor())
+        playerController.seekToTrack(selectedTrackIndex)
         stateUpdater.start()
     }
 
@@ -152,71 +138,54 @@ class PlayerViewModel @Inject constructor(
         _tracks.addAll(updatedTracksList)
     }
 
-    private fun getPlaybackState() {
-        controllerFuture.addListener(
-            { _playbackStateFlow.value = controllerFuture.get().playbackState },
-            MoreExecutors.directExecutor()
+    private fun checkOutControllerState() {
+
+        playerController.controllerStateCallbacks(
+            onPlaying = {
+                _isTrackPlaying.value = true
+                emitPlaybackState()
+                Log.d(MEDIA_CONTROLLER_TAG, "Player is playing")
+            },
+            onPaused = {
+                _isTrackPlaying.value = false
+                emitPlaybackState()
+                Log.d(MEDIA_CONTROLLER_TAG, "Player is paused")
+            },
+            onEnded = {
+                _isTrackPlaying.value = false
+                playerController.pause()
+                Log.d(MEDIA_CONTROLLER_TAG, "Playlist is ended")
+            },
+            onBuffering = {
+                Log.d(MEDIA_CONTROLLER_TAG, "Player is buffering")
+            },
+            onIdle = {
+                Log.d(MEDIA_CONTROLLER_TAG, "Player is idle")
+            }
         )
     }
 
-    private val _playbackStateFlow = MutableStateFlow(0)
-    val playbackStateFlow: StateFlow<Int> = _playbackStateFlow
-
-    private fun updateControllersStateCallback() {
-        controllerFuture.addListener({
-            val controller = controllerFuture.get()
-
-            val playerState = player.playerState.value
-
-            val state = controller.playbackState
-
-            when (state) {
-                Player.STATE_READY -> {
-                    if (controller.isPlaying) {
-                        _isTrackPlaying.value = true
-                        emitPlaybackState()
-                        Log.d(MEDIA_CONTROLLER_TAG, "Player is playing")
-                    } else {
-                        _isTrackPlaying.value = false
-                        emitPlaybackState()
-                        Log.d(MEDIA_CONTROLLER_TAG, "Player is paused")
-                    }
-                }
-
-                Player.STATE_ENDED -> {
-                    _isTrackPlaying.value = false
-                    pauseController()
-                    Log.d(MEDIA_CONTROLLER_TAG, "Playlist is ended")
-                }
-
-                Player.STATE_BUFFERING -> {
-                    Log.d(MEDIA_CONTROLLER_TAG, "Player is buffering")
-                }
-
-                Player.STATE_IDLE -> {
-                    Log.d(MEDIA_CONTROLLER_TAG, "Player is idle")
-                }
+    private fun checkoutPlayerState() {
+        playerController.playerStateCallbacks(
+            onNextTrackAuto = {
+                updateCurrentTrackPlayingState(playerController.getCurrentTrackIndex())
+            },
+            onTrackChangedByUser = {
+                updateCurrentTrackPlayingState(playerController.getCurrentTrackIndex())
+            },
+            onPlaylistChanged = {
+                Log.d(MEDIA_CONTROLLER_TAG, "Playlist changed")
+            },
+            onIdle = {
+                Log.d(MEDIA_CONTROLLER_TAG, "Player idle")
+            },
+            onTransitionReasonRepeat = {
+                Log.d(MEDIA_CONTROLLER_TAG, "Player repeat")
+            },
+            onError = {
+                Log.d(MEDIA_CONTROLLER_TAG, "Player error")
             }
-
-            when (playerState) {
-                PlayerState.STATE_NEXT_TRACK_AUTO -> {
-                    updateCurrentTrackPlayingState(controller.currentMediaItemIndex)
-                }
-
-                PlayerState.STATE_TRACK_CHANGED_BY_USER -> {
-                    updateCurrentTrackPlayingState(controller.currentMediaItemIndex)
-                }
-
-                PlayerState.PLAYLIST_CHANGED -> {}
-                PlayerState.TRANSITION_REASON_REPEAT -> {}
-
-                PlayerState.STATE_IDLE -> {}
-                PlayerState.STATE_ERROR -> {
-                    Log.d(MEDIA_CONTROLLER_TAG, "Player error")
-                }
-            }
-
-        }, MoreExecutors.directExecutor())
+        )
     }
 
     private fun updateCurrentTrackPlayingState(index: Int) {
@@ -226,56 +195,30 @@ class PlayerViewModel @Inject constructor(
     }
 
     private fun emitPlaybackState() {
-        controllerFuture.addListener({
-            val controller = controllerFuture.get()
-            _playbackState.tryEmit(
-                value = PlaybackState(
-                    isInChangingState = sliderIsInChangingState.value,
-                    currentPlaybackPosition = controller.currentPosition,
-                    currentTrackDuration = controller.duration
-                )
+        _playbackState.tryEmit(
+            value = PlaybackState(
+                isInChangingState = sliderIsInChangingState.value,
+                currentPlaybackPosition = playerController.getCurrentPosition(),
+                currentTrackDuration = playerController.getCurrentTrackDuration()
             )
-        }, MoreExecutors.directExecutor())
+        )
     }
 
-    fun putSliderInChangingState() {
+    fun setSliderToManualState() {
         sliderIsInChangingState.value = true
     }
 
-    fun pullSliderFromChangingState() {
+    fun setSliderToAutoState() {
         sliderIsInChangingState.value = false
     }
 
-    private fun playController() {
-        controllerFuture.addListener({
-            val controller = controllerFuture.get()
-            controller.prepare()
-            controller.play()
-        }, MoreExecutors.directExecutor())
-    }
-
-    private fun pauseController() {
-        controllerFuture.addListener({
-            val controller = controllerFuture.get()
-            controller.pause()
-        }, MoreExecutors.directExecutor())
-    }
-
-    private fun startPlaying() {
-        playController()
+    override fun onPlayClick() {
+        playerController.play()
         stateUpdater.start()
     }
 
-    private fun stopPlaying() {
-        pauseController()
-    }
-
-    override fun onPlayClick() {
-        startPlaying()
-    }
-
     override fun onPauseClick() {
-        stopPlaying()
+        playerController.pause()
     }
 
     /**
@@ -283,25 +226,7 @@ class PlayerViewModel @Inject constructor(
      * Switches to the previous track if one exists.
      */
     override fun onPreviousClick() {
-        controllerFuture.addListener({
-            val controller = controllerFuture.get()
-
-            val currentItemIndex = controller.currentMediaItemIndex
-            val totalNumberOfMediaItems = controller.mediaItemCount
-            val previousItemIndex = modulo(currentItemIndex - 1, totalNumberOfMediaItems)
-
-            // Update the UI: change tracks' list state
-            updateCurrentTrackPlayingState(previousItemIndex)
-
-            // Use the player to seek to the selected track
-            seekToSelectedTrack(previousItemIndex)
-
-            if (controller.isPlaying) {
-                playController()
-            }
-
-        }, MoreExecutors.directExecutor())
-
+        playerController.previous { index -> updateCurrentTrackPlayingState(index) }
     }
 
     /**
@@ -309,21 +234,7 @@ class PlayerViewModel @Inject constructor(
      * Switches to the next track in the list if one exists.
      */
     override fun onNextClick() {
-        controllerFuture.addListener({
-            val controller = controllerFuture.get()
-
-            val currentItemIndex = controller.currentMediaItemIndex
-            val totalNumberOfMediaItems = controller.mediaItemCount
-            val nextItemIndex = modulo(currentItemIndex + 1, totalNumberOfMediaItems)
-
-            updateCurrentTrackPlayingState(nextItemIndex)
-
-            seekToSelectedTrack(nextItemIndex)
-            if (controller.isPlaying) {
-                playController()
-            }
-
-        }, MoreExecutors.directExecutor())
+        playerController.next { index -> updateCurrentTrackPlayingState(index) }
     }
 
     /**
@@ -341,7 +252,7 @@ class PlayerViewModel @Inject constructor(
         val selectedTrackIndex = tracks.indexOf(track)
         updateCurrentTrackPlayingState(selectedTrackIndex)
         seekToSelectedTrack(selectedTrackIndex)
-        playController()
+        playerController.play()
     }
 
     /**
@@ -351,10 +262,7 @@ class PlayerViewModel @Inject constructor(
      * @param position The position to seek to.
      */
     override fun onSeekBarPositionChanged(position: Long) {
-        controllerFuture.addListener({
-            val controller = controllerFuture.get()
-            controller.seekTo(position)
-        }, MoreExecutors.directExecutor())
+        playerController.seekToPosition(position)
     }
 
     /**
@@ -365,7 +273,7 @@ class PlayerViewModel @Inject constructor(
         stateUpdater.stop()
         if (!_isTrackPlaying.value) {
             player.releasePlayer()
-            MediaController.releaseFuture(controllerFuture)
+            playerController.release()
         }
         Log.d(VM_TAG, "View-model is cleared")
     }

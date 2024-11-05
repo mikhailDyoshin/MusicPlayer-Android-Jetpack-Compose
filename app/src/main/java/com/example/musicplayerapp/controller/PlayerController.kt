@@ -75,7 +75,11 @@ class PlayerController(
         return controllerFuture.get().duration
     }
 
-    fun next() {
+    fun getCurrentTrackIndex(): Int {
+        return controllerFuture.get().currentMediaItemIndex
+    }
+
+    fun next(onIndexUpdated: (nextIndex: Int) -> Unit) {
         controllerFuture.addListener({
             val controller = controllerFuture.get()
 
@@ -84,6 +88,8 @@ class PlayerController(
             val nextItemIndex = modulo(currentItemIndex + 1, totalNumberOfMediaItems)
 
             seekToTrack(nextItemIndex)
+            onIndexUpdated(nextItemIndex)
+
             if (controller.isPlaying) {
                 play()
             }
@@ -146,7 +152,7 @@ class PlayerController(
 
     }
 
-    fun previous() {
+    fun previous(onIndexUpdated: (previousIndex: Int) -> Unit) {
         controllerFuture.addListener({
             val controller = controllerFuture.get()
 
@@ -155,6 +161,7 @@ class PlayerController(
             val previousItemIndex = modulo(currentItemIndex - 1, totalNumberOfMediaItems)
 
             seekToTrack(previousItemIndex)
+            onIndexUpdated(previousItemIndex)
 
             if (controller.isPlaying) {
                 play()

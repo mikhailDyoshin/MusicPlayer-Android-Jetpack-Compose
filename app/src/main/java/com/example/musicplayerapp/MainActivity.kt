@@ -1,7 +1,6 @@
 package com.example.musicplayerapp
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -14,14 +13,7 @@ import com.example.musicplayerapp.presentation.playerscreen.PlayerScreen
 import com.example.musicplayerapp.presentation.playerscreen.viewmodel.PlayerViewModel
 import com.example.musicplayerapp.ui.theme.MusicPlayerAppTheme
 import androidx.activity.viewModels
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import androidx.media3.common.Player
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
-
-const val PLAYBACK_STATE_TAG = "MyPlaybackState"
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -33,23 +25,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.playbackStateFlow.collect { state ->
-                    when(state) {
-                        Player.STATE_IDLE -> { Log.d(PLAYBACK_STATE_TAG, "IDLE") }
-                        Player.STATE_BUFFERING -> { Log.d(PLAYBACK_STATE_TAG, "BUFFERING") }
-                        Player.STATE_READY -> { Log.d(PLAYBACK_STATE_TAG, "READY") }
-                        Player.STATE_ENDED -> { Log.d(PLAYBACK_STATE_TAG, "ENDED") }
-                        else -> {
-                             Log.d(PLAYBACK_STATE_TAG, "Null state")
-                        }
-                    }
-                }
-            }
-        }
-
 
         setContent {
             MusicPlayerAppTheme {
@@ -73,13 +48,13 @@ class MainActivity : ComponentActivity() {
                         isBottomBarDisplayed = viewModel.isBottomBarDisplayed.value,
                         isPlaying = viewModel.isTrackPlaying.value,
                         onSeekBarPositionChanged = { currentProgress ->
-                            viewModel.pullSliderFromChangingState()
+                            viewModel.setSliderToAutoState()
                             viewModel.onSeekBarPositionChanged(
                                 currentProgress
                             )
                         },
                         onSeekBarPositionChanging = {
-                            viewModel.putSliderInChangingState()
+                            viewModel.setSliderToManualState()
                         },
                         onPlay = { viewModel.onPlayClick() },
                         onPause = { viewModel.onPauseClick() },
