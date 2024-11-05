@@ -291,10 +291,10 @@ class PlaybackService : MediaSessionService(), Player.Listener {
     }
 
     enum class PlayerNotificationAction(val actionString: String) {
-        ACTION_SEEK_BACK("com.example.notificationsapp.ACTION_SEEK_BACK"),
-        ACTION_PLAY("com.example.notificationsapp.ACTION_PLAY"),
-        ACTION_PAUSE("com.example.notificationsapp.ACTION_PAUSE"),
-        ACTION_PREVIOUS("com.example.notificationsapp.ACTION_PREVIOUS"),
-        ACTION_NEXT("com.example.notificationsapp.ACTION_NEXT"),
+        ACTION_SEEK_BACK("com.example.musicplayerapp.ACTION_SEEK_BACK"),
+        ACTION_PLAY("com.example.musicplayerapp.ACTION_PLAY"),
+        ACTION_PAUSE("com.example.musicplayerapp.ACTION_PAUSE"),
+        ACTION_PREVIOUS("com.example.musicplayerapp.ACTION_PREVIOUS"),
+        ACTION_NEXT("com.example.musicplayerapp.ACTION_NEXT"),
     }
 }
