@@ -152,6 +152,16 @@ class PlayerViewModel @Inject constructor(
         _tracks.addAll(updatedTracksList)
     }
 
+    private fun getPlaybackState() {
+        controllerFuture.addListener(
+            { _playbackStateFlow.value = controllerFuture.get().playbackState },
+            MoreExecutors.directExecutor()
+        )
+    }
+
+    private val _playbackStateFlow = MutableStateFlow(0)
+    val playbackStateFlow: StateFlow<Int> = _playbackStateFlow
+
     private fun updateControllersStateCallback() {
         controllerFuture.addListener({
             val controller = controllerFuture.get()
