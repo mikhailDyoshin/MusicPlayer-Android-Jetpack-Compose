@@ -3,8 +3,6 @@ package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -15,8 +13,11 @@ import com.example.musicplayerapp.domain.models.AudioUrisListModel
 import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.MusicPlayer
 import com.example.musicplayerapp.player.MusicPlayerInterface
-import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
+import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
+import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarVisibility
+import com.example.musicplayerapp.presentation.playerscreen.state.PlayerUIState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
+import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
 import com.example.musicplayerapp.utils.StateUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,35 +33,19 @@ class PlayerViewModel @Inject constructor(
 ) : ViewModel(), MusicPlayerInterface {
 
     /**
-     * A mutable state list of all tracks.
+     * State that stores a list of all tracks.
      */
     private val _tracks = mutableStateListOf<TrackState>()
-
-    /**
-     * An immutable snapshot of the current list of tracks.
-     */
     val tracks: List<TrackState> get() = _tracks
 
     /**
-     * A private [MutableStateFlow] that holds the current [PlaybackState].
      * It emits updated playback state to observers.
      */
-    private val _playbackState = MutableStateFlow(PlaybackState())
-    val playbackState: StateFlow<PlaybackState> get() = _playbackState
+    private val _sliderProgressState = MutableStateFlow(SliderProgressState())
+    val sliderProgressState: StateFlow<SliderProgressState> get() = _sliderProgressState
 
-    /**
-     * A private Boolean variable to know whether a track is currently being played or not.
-     */
-    private val _isTrackPlaying = mutableStateOf(false)
-
-    /**
-     * A public property that exposes the [_isTrackPlaying] as an immutable [State] for observers.
-     */
-    val isTrackPlaying: State<Boolean> = _isTrackPlaying
-
-    private val _isBottomBarDisplayed = mutableStateOf(false)
-
-    val isBottomBarDisplayed = _isBottomBarDisplayed
+    private val _playerBarState = mutableStateOf(PlayerBarState())
+    val playerBarState = _playerBarState
 
     /**
      * The [stateUpdater] is used to start and stop updates (which happens after each frame)
@@ -75,14 +60,6 @@ class PlayerViewModel @Inject constructor(
     )
 
     private val playerController = PlayerController(context, player)
-
-    private val sliderIsInChangingState: MutableState<SliderControlState> =
-        mutableStateOf(SliderControlState.AUTO)
-
-    /**
-     * A private property that holds the index of the currently selected track.
-     */
-//    private var selectedTrackIndex = 0
 
     /**
      * Converts a list of [TrackState] objects into a mutable list of [MediaItem] objects.
@@ -141,17 +118,20 @@ class PlayerViewModel @Inject constructor(
 
         playerController.controllerStateCallbacks(
             onPlaying = {
-                _isTrackPlaying.value = true
+                _playerBarState.value =
+                    _playerBarState.value.copy(playerState = PlayerUIState.PLAYING)
                 emitPlaybackState()
                 Log.d(MEDIA_CONTROLLER_TAG, "Player is playing")
             },
             onPaused = {
-                _isTrackPlaying.value = false
+                _playerBarState.value =
+                    _playerBarState.value.copy(playerState = PlayerUIState.PAUSED)
                 emitPlaybackState()
                 Log.d(MEDIA_CONTROLLER_TAG, "Player is paused")
             },
             onEnded = {
-                _isTrackPlaying.value = false
+                _playerBarState.value =
+                    _playerBarState.value.copy(playerState = PlayerUIState.PAUSED)
                 playerController.pause()
                 Log.d(MEDIA_CONTROLLER_TAG, "Playlist is ended")
             },
@@ -182,6 +162,8 @@ class PlayerViewModel @Inject constructor(
                 Log.d(MEDIA_CONTROLLER_TAG, "Player repeat")
             },
             onError = {
+                _playerBarState.value =
+                    _playerBarState.value.copy(playerState = PlayerUIState.ERROR)
                 Log.d(MEDIA_CONTROLLER_TAG, "Player error")
             }
         )
@@ -194,9 +176,8 @@ class PlayerViewModel @Inject constructor(
     }
 
     private fun emitPlaybackState() {
-        _playbackState.tryEmit(
-            value = PlaybackState(
-                sliderControlState = sliderIsInChangingState.value,
+        _sliderProgressState.tryEmit(
+            value = SliderProgressState(
                 currentPlaybackPosition = playerController.getCurrentPosition(),
                 currentTrackDuration = playerController.getCurrentTrackDuration()
             )
@@ -204,11 +185,11 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun setSliderToManualState() {
-        sliderIsInChangingState.value = SliderControlState.MANUAL
+        _playerBarState.value = _playerBarState.value.copy(sliderControlState = SliderControlState.MANUAL)
     }
 
     fun setSliderToAutoState() {
-        sliderIsInChangingState.value = SliderControlState.AUTO
+        _playerBarState.value = _playerBarState.value.copy(sliderControlState = SliderControlState.AUTO)
     }
 
     override fun onPlayClick() {
@@ -244,8 +225,14 @@ class PlayerViewModel @Inject constructor(
      */
     override fun onTrackClick(track: TrackState) {
 
-        if (!_isBottomBarDisplayed.value) {
-            _isBottomBarDisplayed.value = true
+        when (_playerBarState.value.barVisibility) {
+            PlayerBarVisibility.VISIBLE -> {
+                // Do nothing
+            }
+            PlayerBarVisibility.INVISIBLE -> {
+                _playerBarState.value =
+                    _playerBarState.value.copy(barVisibility = PlayerBarVisibility.VISIBLE)
+            }
         }
 
         val selectedTrackIndex = tracks.indexOf(track)
@@ -265,15 +252,27 @@ class PlayerViewModel @Inject constructor(
     }
 
     /**
-     * Releases the media player and the media controller, stops the StateUpdater when the ViewModel is cleared.
+     * Releases the media player and the media controller,
+     * stops the StateUpdater when the ViewModel is cleared.
      */
     override fun onCleared() {
         super.onCleared()
         stateUpdater.stop()
-        if (!_isTrackPlaying.value) {
-            player.releasePlayer()
-            playerController.release()
+
+        when(_playerBarState.value.playerState) {
+            PlayerUIState.PLAYING -> {
+                // Do nothing
+            }
+            PlayerUIState.PAUSED -> {
+                player.releasePlayer()
+                playerController.release()
+            }
+            PlayerUIState.ERROR -> {
+                player.releasePlayer()
+                playerController.release()
+            }
         }
+
         Log.d(VM_TAG, "View-model is cleared")
     }
 

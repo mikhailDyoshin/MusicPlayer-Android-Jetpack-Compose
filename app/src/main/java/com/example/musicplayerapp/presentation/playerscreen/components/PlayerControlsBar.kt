@@ -17,10 +17,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.musicplayerapp.R
+import com.example.musicplayerapp.presentation.playerscreen.state.PlayerUIState
 
 @Composable
 fun PlayerControlsBar(
-    isPlaying: Boolean,
+    playerUIState: PlayerUIState,
     onPlay: () -> Unit,
     onPause: () -> Unit,
     onNext: () -> Unit,
@@ -47,12 +48,20 @@ fun PlayerControlsBar(
         }
 
         // Play/Pause button
-        IconButton(onClick = { if (isPlaying) onPause() else onPlay() }) {
-            if (isPlaying) {
-                Icon(painter = painterResource(R.drawable.pause_icon), null)
-            } else {
+        IconButton(onClick = { when (playerUIState) {
+            PlayerUIState.PLAYING -> {
+                onPause()
+            }
+            PlayerUIState.PAUSED -> onPlay()
+            PlayerUIState.ERROR -> {
+                // Do nothing
+            }
+        } }) {
 
-                Icon(painter = painterResource(R.drawable.play_icon), contentDescription = null)
+            when (playerUIState) {
+                PlayerUIState.PLAYING -> Icon(painter = painterResource(R.drawable.pause_icon), null)
+                PlayerUIState.PAUSED -> Icon(painter = painterResource(R.drawable.play_icon), contentDescription = null)
+                PlayerUIState.ERROR -> Icon(painter = painterResource(R.drawable.play_icon), contentDescription = null)
             }
         }
 
@@ -74,7 +83,7 @@ fun PlayerControlsBar(
 @Composable
 fun PlayerControlsBarOnPausePreview() {
     PlayerControlsBar(
-        isPlaying = false,
+        playerUIState = PlayerUIState.PAUSED,
         onPlay = { /*TODO*/ },
         onPause = { /*TODO*/ },
         onNext = { /*TODO*/ },
@@ -87,7 +96,7 @@ fun PlayerControlsBarOnPausePreview() {
 @Composable
 fun PlayerControlsBarPlayingPreview() {
     PlayerControlsBar(
-        isPlaying = true,
+        playerUIState = PlayerUIState.PLAYING,
         onPlay = { /*TODO*/ },
         onPause = { /*TODO*/ },
         onNext = { /*TODO*/ },

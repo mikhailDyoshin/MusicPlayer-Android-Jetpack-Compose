@@ -15,8 +15,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.example.musicplayerapp.presentation.playerscreen.components.PlayerBottomBar
 import com.example.musicplayerapp.presentation.playerscreen.components.TrackList
-import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
-import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
+import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
+import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarVisibility
+import com.example.musicplayerapp.presentation.playerscreen.state.PlayerUIState
+import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
 import com.example.musicplayerapp.ui.theme.PurpleGrey80
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,9 +27,8 @@ import kotlinx.coroutines.flow.StateFlow
 @Composable
 fun PlayerScreen(
     tracks: List<TrackState>,
-    isBottomBarDisplayed: Boolean,
-    isPlaying: Boolean,
-    playbackState: StateFlow<PlaybackState>,
+    playerBarState: PlayerBarState,
+    sliderProgressState: StateFlow<SliderProgressState>,
     onTrackClick: (track: TrackState) -> Unit,
     onSeekBarPositionChanged: (currentProgress: Long) -> Unit,
     onSeekBarPositionChanging: () -> Unit,
@@ -52,22 +53,34 @@ fun PlayerScreen(
                 .wrapContentSize()
                 .zIndex(2f)
                 .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = if (isBottomBarDisplayed) 170.dp else 20.dp)
+                .padding(
+                    end = 20.dp, bottom = when (playerBarState.barVisibility) {
+                        PlayerBarVisibility.VISIBLE -> 170.dp
+                        PlayerBarVisibility.INVISIBLE -> 20.dp
+                    }
+                )
         ) {
             Text("+")
         }
-        if (isBottomBarDisplayed) {
-            PlayerBottomBar(
-                playbackState = playbackState,
-                onSeekBarPositionChanging = { onSeekBarPositionChanging() },
-                onSeekBarPositionChanged = { onSeekBarPositionChanged(it) },
-                isPlaying = isPlaying,
-                onPlay = { onPlay() },
-                onPause = { onPause() },
-                onNext = { onNext() },
-                onPrev = { onPrev() },
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
+        when (playerBarState.barVisibility) {
+
+            PlayerBarVisibility.VISIBLE -> {
+                PlayerBottomBar(
+                    playbackState = sliderProgressState,
+                    onSeekBarPositionChanging = { onSeekBarPositionChanging() },
+                    onSeekBarPositionChanged = { onSeekBarPositionChanged(it) },
+                    playerBarState = playerBarState,
+                    onPlay = { onPlay() },
+                    onPause = { onPause() },
+                    onNext = { onNext() },
+                    onPrev = { onPrev() },
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                )
+            }
+
+            PlayerBarVisibility.INVISIBLE -> {
+                // Display nothing
+            }
         }
     }
 }
@@ -97,14 +110,13 @@ fun PlayerScreenPreview() {
     val trackDuration = 500000L
 
     val mutableFlow =
-        MutableStateFlow(PlaybackState(SliderControlState.AUTO, currentPosition, trackDuration))
-    val flow: StateFlow<PlaybackState> = mutableFlow
+        MutableStateFlow(SliderProgressState(currentPosition, trackDuration))
+    val flow: StateFlow<SliderProgressState> = mutableFlow
 
     PlayerScreen(
         tracks = trackList,
-        isBottomBarDisplayed = false,
-        isPlaying = false,
-        playbackState = flow,
+        playerBarState = PlayerBarState(),
+        sliderProgressState = flow,
         onTrackClick = {},
         onSeekBarPositionChanged = {},
         onSeekBarPositionChanging = {},
@@ -140,14 +152,16 @@ fun PlayerScreenPlayingPreview() {
     val trackDuration = 500000L
 
     val mutableFlow =
-        MutableStateFlow(PlaybackState(SliderControlState.AUTO, currentPosition, trackDuration))
-    val flow: StateFlow<PlaybackState> = mutableFlow
+        MutableStateFlow(SliderProgressState(currentPosition, trackDuration))
+    val flow: StateFlow<SliderProgressState> = mutableFlow
 
     PlayerScreen(
         tracks = trackList,
-        isBottomBarDisplayed = true,
-        isPlaying = true,
-        playbackState = flow,
+        playerBarState = PlayerBarState(
+            playerState = PlayerUIState.PLAYING,
+            barVisibility = PlayerBarVisibility.VISIBLE
+        ),
+        sliderProgressState = flow,
         onTrackClick = {},
         onSeekBarPositionChanged = {},
         onSeekBarPositionChanging = {},

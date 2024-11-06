@@ -20,21 +20,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
+import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun TrackProgressSlider(
-    playbackState: StateFlow<PlaybackState>,
+    playbackState: StateFlow<SliderProgressState>,
+    sliderControlState: SliderControlState,
     onSeekBarPositionChanging: () -> Unit,
     onSeekBarPositionChanged: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
     val playbackStateValue = playbackState.collectAsState(
-        initial = PlaybackState()
+        initial = SliderProgressState()
     ).value
 
     val positionAuto = playbackStateValue.currentPlaybackPosition.toFloat()
@@ -47,7 +48,7 @@ fun TrackProgressSlider(
         verticalArrangement = Arrangement.Center
     ) {
         Slider(
-            value = when (playbackStateValue.sliderControlState) {
+            value = when (sliderControlState) {
                 SliderControlState.AUTO -> positionAuto
                 SliderControlState.MANUAL -> positionManual
             },
@@ -71,7 +72,7 @@ fun TrackProgressSlider(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = when (playbackStateValue.sliderControlState) {
+                text = when (sliderControlState) {
                     SliderControlState.AUTO -> playbackStateValue.currentPlaybackPosition.formatTime()
                     SliderControlState.MANUAL -> timeManual
                 },
@@ -105,11 +106,12 @@ fun TrackProgressSliderPreview() {
     val trackDuration = 500000L
 
     val mutableFlow =
-        MutableStateFlow(PlaybackState(SliderControlState.AUTO, currentPosition, trackDuration))
-    val flow: StateFlow<PlaybackState> = mutableFlow
+        MutableStateFlow(SliderProgressState(currentPosition, trackDuration))
+    val flow: StateFlow<SliderProgressState> = mutableFlow
 
     TrackProgressSlider(
         playbackState = flow,
+        sliderControlState = SliderControlState.AUTO,
         onSeekBarPositionChanging = {},
         onSeekBarPositionChanged = {},
         modifier = Modifier.background(color = Color.White)

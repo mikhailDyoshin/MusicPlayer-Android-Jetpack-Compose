@@ -4,10 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
-import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
+import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
+import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
 import com.example.musicplayerapp.ui.theme.ControlsBarBackground
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,12 +14,12 @@ import kotlinx.coroutines.flow.StateFlow
 @Composable
 fun PlayerBottomBar(
     // Slider
-    playbackState: StateFlow<PlaybackState>,
+    playbackState: StateFlow<SliderProgressState>,
     onSeekBarPositionChanging: () -> Unit,
     onSeekBarPositionChanged: (Long) -> Unit,
 
     // Controls
-    isPlaying: Boolean,
+    playerBarState: PlayerBarState,
     onPlay: () -> Unit,
     onPause: () -> Unit,
     onNext: () -> Unit,
@@ -33,12 +32,13 @@ fun PlayerBottomBar(
     Column(modifier = modifier.background(color = ControlsBarBackground)) {
         TrackProgressSlider(
             playbackState = playbackState,
+            sliderControlState = playerBarState.sliderControlState,
             onSeekBarPositionChanging = { onSeekBarPositionChanging() },
             onSeekBarPositionChanged = { onSeekBarPositionChanged(it) }
         )
 
         PlayerControlsBar(
-            isPlaying = isPlaying,
+            playerUIState = playerBarState.playerState,
             onPlay = { onPlay() },
             onPause = { onPause() },
             onNext = { onNext() },
@@ -53,14 +53,14 @@ fun PlayerBottomBarPlayingPreview() {
     val currentPosition = 50000L
     val trackDuration = 500000L
 
-    val mutableFlow = MutableStateFlow(PlaybackState(SliderControlState.AUTO, currentPosition, trackDuration))
-    val flow: StateFlow<PlaybackState> = mutableFlow
+    val mutableFlow = MutableStateFlow(SliderProgressState(currentPosition, trackDuration))
+    val flow: StateFlow<SliderProgressState> = mutableFlow
 
     PlayerBottomBar(
         playbackState = flow,
         onSeekBarPositionChanging = { /*TODO*/ },
         onSeekBarPositionChanged = {},
-        isPlaying = true,
+        playerBarState = PlayerBarState(),
         onPlay = { /*TODO*/ },
         onPause = { /*TODO*/ },
         onNext = { /*TODO*/ },
@@ -73,14 +73,14 @@ fun PlayerBottomBarOnPausePreview() {
     val currentPosition = 0L
     val trackDuration = 500000L
 
-    val mutableFlow = MutableStateFlow(PlaybackState(SliderControlState.AUTO, currentPosition, trackDuration))
-    val flow: StateFlow<PlaybackState> = mutableFlow
+    val mutableFlow = MutableStateFlow(SliderProgressState(currentPosition, trackDuration))
+    val flow: StateFlow<SliderProgressState> = mutableFlow
 
     PlayerBottomBar(
         playbackState = flow,
         onSeekBarPositionChanging = { /*TODO*/ },
         onSeekBarPositionChanged = {},
-        isPlaying = false,
+        playerBarState = PlayerBarState(),
         onPlay = { /*TODO*/ },
         onPause = { /*TODO*/ },
         onNext = { /*TODO*/ },

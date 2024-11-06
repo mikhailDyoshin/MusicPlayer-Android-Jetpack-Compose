@@ -21,8 +21,6 @@ class MainActivity : ComponentActivity() {
     private val viewModel: PlayerViewModel by viewModels()
 
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -43,10 +41,9 @@ class MainActivity : ComponentActivity() {
 
                     PlayerScreen(
                         tracks = viewModel.tracks,
-                        playbackState = viewModel.playbackState,
+                        sliderProgressState = viewModel.sliderProgressState,
+                        playerBarState = viewModel.playerBarState.value,
                         onTrackClick = { viewModel.onTrackClick(it) },
-                        isBottomBarDisplayed = viewModel.isBottomBarDisplayed.value,
-                        isPlaying = viewModel.isTrackPlaying.value,
                         onSeekBarPositionChanged = { currentProgress ->
                             viewModel.setSliderToAutoState()
                             viewModel.onSeekBarPositionChanged(
