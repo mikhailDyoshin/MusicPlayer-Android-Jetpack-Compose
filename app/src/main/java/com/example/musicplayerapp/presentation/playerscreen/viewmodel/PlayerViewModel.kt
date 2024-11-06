@@ -3,6 +3,7 @@ package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +16,7 @@ import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.MusicPlayer
 import com.example.musicplayerapp.player.MusicPlayerInterface
 import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
+import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
 import com.example.musicplayerapp.utils.StateUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,13 +43,9 @@ class PlayerViewModel @Inject constructor(
 
     /**
      * A private [MutableStateFlow] that holds the current [PlaybackState].
-     * It is used to emit updates about the playback state to observers.
+     * It emits updated playback state to observers.
      */
-    private val _playbackState = MutableStateFlow(PlaybackState(false, 0L, 0L))
-
-    /**
-     * A public property that exposes the [_playbackState] as an immutable [StateFlow] for observers.
-     */
+    private val _playbackState = MutableStateFlow(PlaybackState())
     val playbackState: StateFlow<PlaybackState> get() = _playbackState
 
     /**
@@ -78,7 +76,8 @@ class PlayerViewModel @Inject constructor(
 
     private val playerController = PlayerController(context, player)
 
-    private val sliderIsInChangingState = mutableStateOf(false)
+    private val sliderIsInChangingState: MutableState<SliderControlState> =
+        mutableStateOf(SliderControlState.AUTO)
 
     /**
      * A private property that holds the index of the currently selected track.
@@ -197,7 +196,7 @@ class PlayerViewModel @Inject constructor(
     private fun emitPlaybackState() {
         _playbackState.tryEmit(
             value = PlaybackState(
-                isInChangingState = sliderIsInChangingState.value,
+                sliderControlState = sliderIsInChangingState.value,
                 currentPlaybackPosition = playerController.getCurrentPosition(),
                 currentTrackDuration = playerController.getCurrentTrackDuration()
             )
@@ -205,11 +204,11 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun setSliderToManualState() {
-        sliderIsInChangingState.value = true
+        sliderIsInChangingState.value = SliderControlState.MANUAL
     }
 
     fun setSliderToAutoState() {
-        sliderIsInChangingState.value = false
+        sliderIsInChangingState.value = SliderControlState.AUTO
     }
 
     override fun onPlayClick() {

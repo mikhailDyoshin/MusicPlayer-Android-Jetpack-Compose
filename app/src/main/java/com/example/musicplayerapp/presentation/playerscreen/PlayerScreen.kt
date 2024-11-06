@@ -16,6 +16,7 @@ import androidx.compose.ui.zIndex
 import com.example.musicplayerapp.presentation.playerscreen.components.PlayerBottomBar
 import com.example.musicplayerapp.presentation.playerscreen.components.TrackList
 import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
+import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
 import com.example.musicplayerapp.ui.theme.PurpleGrey80
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -95,7 +96,8 @@ fun PlayerScreenPreview() {
     val currentPosition = 50000L
     val trackDuration = 500000L
 
-    val mutableFlow = MutableStateFlow(PlaybackState(false, currentPosition, trackDuration))
+    val mutableFlow =
+        MutableStateFlow(PlaybackState(SliderControlState.AUTO, currentPosition, trackDuration))
     val flow: StateFlow<PlaybackState> = mutableFlow
 
     PlayerScreen(
@@ -137,7 +139,8 @@ fun PlayerScreenPlayingPreview() {
     val currentPosition = 50000L
     val trackDuration = 500000L
 
-    val mutableFlow = MutableStateFlow(PlaybackState(false, currentPosition, trackDuration))
+    val mutableFlow =
+        MutableStateFlow(PlaybackState(SliderControlState.AUTO, currentPosition, trackDuration))
     val flow: StateFlow<PlaybackState> = mutableFlow
 
     PlayerScreen(

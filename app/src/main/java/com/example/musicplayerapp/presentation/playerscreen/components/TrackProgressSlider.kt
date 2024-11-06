@@ -6,14 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -23,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
+import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -35,29 +34,30 @@ fun TrackProgressSlider(
 ) {
 
     val playbackStateValue = playbackState.collectAsState(
-        initial = PlaybackState(false, 0L, 0L)
+        initial = PlaybackState()
     ).value
 
-    val inChangingState = playbackStateValue.isInChangingState
+    val positionAuto = playbackStateValue.currentPlaybackPosition.toFloat()
 
-    val currentMediaProgress = playbackStateValue.currentPlaybackPosition.toFloat()
-    var currentPosTemp by rememberSaveable { mutableFloatStateOf(0f) }
-
-    var currentPlaybackTime by remember { mutableStateOf("") }
+    var positionManual by rememberSaveable { mutableFloatStateOf(0f) }
+    var timeManual by remember { mutableStateOf("") }
 
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.Center
     ) {
         Slider(
-            value = if (inChangingState) currentPosTemp else currentMediaProgress,
+            value = when (playbackStateValue.sliderControlState) {
+                SliderControlState.AUTO -> positionAuto
+                SliderControlState.MANUAL -> positionManual
+            },
             onValueChange = {
                 onSeekBarPositionChanging()
-                currentPosTemp = it
-                currentPlaybackTime = it.toLong().formatTime()
+                positionManual = it
+                timeManual = it.toLong().formatTime()
             },
             onValueChangeFinished = {
-                onSeekBarPositionChanged(currentPosTemp.toLong())
+                onSeekBarPositionChanged(positionManual.toLong())
             },
             valueRange = 0f..playbackStateValue.currentTrackDuration.toFloat(),
             modifier = Modifier
@@ -71,7 +71,10 @@ fun TrackProgressSlider(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = if (inChangingState) currentPlaybackTime else playbackStateValue.currentPlaybackPosition.formatTime(),
+                text = when (playbackStateValue.sliderControlState) {
+                    SliderControlState.AUTO -> playbackStateValue.currentPlaybackPosition.formatTime()
+                    SliderControlState.MANUAL -> timeManual
+                },
             )
             Text(
                 text = playbackStateValue.currentTrackDuration.formatTime(),
@@ -101,7 +104,8 @@ fun TrackProgressSliderPreview() {
     val currentPosition = 50000L
     val trackDuration = 500000L
 
-    val mutableFlow = MutableStateFlow(PlaybackState(false, currentPosition, trackDuration))
+    val mutableFlow =
+        MutableStateFlow(PlaybackState(SliderControlState.AUTO, currentPosition, trackDuration))
     val flow: StateFlow<PlaybackState> = mutableFlow
 
     TrackProgressSlider(

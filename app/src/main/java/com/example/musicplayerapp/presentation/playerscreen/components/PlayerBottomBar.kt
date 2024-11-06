@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.musicplayerapp.presentation.playerscreen.state.PlaybackState
+import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
 import com.example.musicplayerapp.ui.theme.ControlsBarBackground
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,7 +53,7 @@ fun PlayerBottomBarPlayingPreview() {
     val currentPosition = 50000L
     val trackDuration = 500000L
 
-    val mutableFlow = MutableStateFlow(PlaybackState(false, currentPosition, trackDuration))
+    val mutableFlow = MutableStateFlow(PlaybackState(SliderControlState.AUTO, currentPosition, trackDuration))
     val flow: StateFlow<PlaybackState> = mutableFlow
 
     PlayerBottomBar(
@@ -72,7 +73,7 @@ fun PlayerBottomBarOnPausePreview() {
     val currentPosition = 0L
     val trackDuration = 500000L
 
-    val mutableFlow = MutableStateFlow(PlaybackState(false, currentPosition, trackDuration))
+    val mutableFlow = MutableStateFlow(PlaybackState(SliderControlState.AUTO, currentPosition, trackDuration))
     val flow: StateFlow<PlaybackState> = mutableFlow
 
     PlayerBottomBar(
