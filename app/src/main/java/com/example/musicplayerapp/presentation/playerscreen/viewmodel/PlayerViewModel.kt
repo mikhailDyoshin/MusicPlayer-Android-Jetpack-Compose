@@ -47,6 +47,9 @@ class PlayerViewModel @Inject constructor(
     private val _playerBarState = mutableStateOf(PlayerBarState())
     val playerBarState = _playerBarState
 
+
+    private val _sliderControlState = mutableStateOf(SliderControlState.AUTO)
+
     /**
      * The [stateUpdater] is used to start and stop updates (which happens after each frame)
      * of the [player]'s state.
@@ -182,14 +185,15 @@ class PlayerViewModel @Inject constructor(
                 currentTrackDuration = playerController.getCurrentTrackDuration()
             )
         )
+        _playerBarState.value = _playerBarState.value.copy(sliderControlState = _sliderControlState.value)
     }
 
     fun setSliderToManualState() {
-        _playerBarState.value = _playerBarState.value.copy(sliderControlState = SliderControlState.MANUAL)
+        _sliderControlState.value = SliderControlState.MANUAL
     }
 
     fun setSliderToAutoState() {
-        _playerBarState.value = _playerBarState.value.copy(sliderControlState = SliderControlState.AUTO)
+        _sliderControlState.value = SliderControlState.AUTO
     }
 
     override fun onPlayClick() {
