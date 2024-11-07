@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
                 val selectAudioLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.GetMultipleContents()
                 ) { uriList ->
-                    viewModel.getTracks(uriList)
+                    viewModel.addTracks(uriList)
                 }
 
                 // A surface container using the 'background' color from the theme

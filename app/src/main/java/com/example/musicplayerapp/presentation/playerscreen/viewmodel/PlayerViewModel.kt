@@ -76,7 +76,7 @@ class PlayerViewModel @Inject constructor(
     /**
      * Loads tracks from content provider
      */
-    fun getTracks(urisList: List<Uri>) {
+    fun addTracks(urisList: List<Uri>) {
 
         val newTracks = getTracksUseCase.execute(AudioUrisListModel(urisList)).map {
             Log.d("Music tracks", it.trackUri)
@@ -92,7 +92,7 @@ class PlayerViewModel @Inject constructor(
 
         _tracks.addAll(newTracks)
 
-        if (tracks.isNotEmpty()) {
+        if (_tracks.isNotEmpty()) {
             playerController.addTracks(newTracks.toMediaItemList())
         }
     }
@@ -185,7 +185,8 @@ class PlayerViewModel @Inject constructor(
                 currentTrackDuration = playerController.getCurrentTrackDuration()
             )
         )
-        _playerBarState.value = _playerBarState.value.copy(sliderControlState = _sliderControlState.value)
+        _playerBarState.value =
+            _playerBarState.value.copy(sliderControlState = _sliderControlState.value)
     }
 
     fun setSliderToManualState() {
@@ -233,6 +234,7 @@ class PlayerViewModel @Inject constructor(
             PlayerBarVisibility.VISIBLE -> {
                 // Do nothing
             }
+
             PlayerBarVisibility.INVISIBLE -> {
                 _playerBarState.value =
                     _playerBarState.value.copy(barVisibility = PlayerBarVisibility.VISIBLE)
@@ -263,14 +265,16 @@ class PlayerViewModel @Inject constructor(
         super.onCleared()
         stateUpdater.stop()
 
-        when(_playerBarState.value.playerState) {
+        when (_playerBarState.value.playerState) {
             PlayerUIState.PLAYING -> {
                 // Do nothing
             }
+
             PlayerUIState.PAUSED -> {
                 player.releasePlayer()
                 playerController.release()
             }
+
             PlayerUIState.ERROR -> {
                 player.releasePlayer()
                 playerController.release()
