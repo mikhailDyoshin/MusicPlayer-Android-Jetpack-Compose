@@ -1,6 +1,5 @@
 package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 
-import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
@@ -11,7 +10,6 @@ import com.example.musicplayerapp.config.UPDATE_DELAY
 import com.example.musicplayerapp.controller.PlayerController
 import com.example.musicplayerapp.domain.models.AudioUrisListModel
 import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
-import com.example.musicplayerapp.player.MusicPlayer
 import com.example.musicplayerapp.player.MusicPlayerInterface
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarVisibility
@@ -27,9 +25,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
-    context: Context,
+    private val playerController: PlayerController,
     private val getTracksUseCase: GetTracksUseCase,
-    private val player: MusicPlayer
 ) : ViewModel(), MusicPlayerInterface {
 
     /**
@@ -52,7 +49,7 @@ class PlayerViewModel @Inject constructor(
 
     /**
      * The [stateUpdater] is used to start and stop updates (which happens after each frame)
-     * of the [player]'s state.
+     * of the [playerController]'s state.
      */
     private val stateUpdater = StateUpdater(
         callBack = {
@@ -61,8 +58,6 @@ class PlayerViewModel @Inject constructor(
         },
         updatePeriodMillis = UPDATE_DELAY
     )
-
-    private val playerController = PlayerController(context, player)
 
     /**
      * Converts a list of [TrackState] objects into a mutable list of [MediaItem] objects.
@@ -271,12 +266,10 @@ class PlayerViewModel @Inject constructor(
             }
 
             PlayerUIState.PAUSED -> {
-                player.releasePlayer()
                 playerController.release()
             }
 
             PlayerUIState.ERROR -> {
-                player.releasePlayer()
                 playerController.release()
             }
         }

@@ -6,13 +6,15 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.MusicPlayer
 import com.example.musicplayerapp.player.PlayerState
 import com.example.musicplayerapp.service.PlaybackService
 import com.example.musicplayerapp.utils.modulo
 import com.google.common.util.concurrent.MoreExecutors
+import javax.inject.Inject
 
-class PlayerController(
+class PlayerController @Inject constructor(
     context: Context,
     private val player: MusicPlayer
 ) {
@@ -172,6 +174,7 @@ class PlayerController(
 
     fun release() {
         MediaController.releaseFuture(controllerFuture)
+        player.releasePlayer()
     }
 
     fun seekToTrack(trackIndex: Int) {
