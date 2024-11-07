@@ -1,6 +1,7 @@
 package com.example.musicplayerapp.player
 
 import android.net.Uri
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.example.musicplayerapp.domain.models.AudioUrisListModel
@@ -10,19 +11,22 @@ import javax.inject.Inject
 
 class PlaylistManager @Inject constructor(private val getTracksUseCase: GetTracksUseCase) {
 
-    private val _playlistState = mutableStateOf(PlaylistState())
-    val playlistState: State<PlaylistState> = _playlistState
+    private val currentIndex: MutableState<Int?> = mutableStateOf(null)
+
+    private val _tracksState: MutableState<List<TrackState>> = mutableStateOf(emptyList())
+    val tracksState: State<List<TrackState>> = _tracksState
 
     fun addTracks(listOfURIs: List<Uri>) {
 
         val newTracks = getTracksFromURIs(listOfURIs)
 
-        _playlistState.value = _playlistState.value.copy(tracks = newTracks)
+        _tracksState.value = newTracks
 
     }
 
     fun updateIndex(newIndex: Int) {
-        _playlistState.value = _playlistState.value.copy(currentIndex = newIndex)
+        currentIndex.value = newIndex
+        setTrackToSelectedState(newIndex)
     }
 
     private fun getTracksFromURIs(listOfURIs: List<Uri>): List<TrackState> {
@@ -39,6 +43,12 @@ class PlaylistManager @Inject constructor(private val getTracksUseCase: GetTrack
 
     }
 
-}
+    private fun setTrackToSelectedState(index: Int) {
+        _tracksState.value = _tracksState.value.mapIndexed { trackIndex, track ->
+            track.copy(
+                isSelected = trackIndex == index
+            )
+        }
+    }
 
-data class PlaylistState(val currentIndex: Int? = null, val tracks: List<TrackState> = emptyList())
+}

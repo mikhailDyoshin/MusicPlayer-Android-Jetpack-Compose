@@ -10,7 +10,6 @@ import com.example.musicplayerapp.config.UPDATE_DELAY
 import com.example.musicplayerapp.controller.PlayerController
 import com.example.musicplayerapp.player.MusicPlayerInterface
 import com.example.musicplayerapp.player.PlaylistManager
-import com.example.musicplayerapp.player.PlaylistState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarVisibility
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerUIState
@@ -27,14 +26,12 @@ import javax.inject.Inject
 class PlayerViewModel @Inject constructor(
     private val playerController: PlayerController,
     private val playlistManager: PlaylistManager
-//    private val getTracksUseCase: GetTracksUseCase,
 ) : ViewModel(), MusicPlayerInterface {
 
     /**
      * State that stores a list of all tracks.
      */
-//    private val _tracks = mutableStateListOf<TrackState>()
-    val playlistState: State<PlaylistState> = playlistManager.playlistState
+    val playlistState: State<List<TrackState>> = playlistManager.tracksState
 
     /**
      * It emits updated playback state to observers.
@@ -74,26 +71,11 @@ class PlayerViewModel @Inject constructor(
      */
     fun addTracks(urisList: List<Uri>) {
 
-//        val newTracks = getTracksUseCase.execute(AudioUrisListModel(urisList)).map {
-//            Log.d("Music tracks", it.trackUri)
-//            TrackState(
-//                trackId = it.trackId,
-//                trackName = it.trackName,
-//                trackUrl = it.trackUri,
-//                trackImage = it.trackImage,
-//                artistName = it.artistName,
-//                isSelected = it.isSelected,
-//            )
-//        }
-//
-//        _tracks.addAll(newTracks)
-//
         playlistManager.addTracks(urisList)
 
-        if (playlistState.value.tracks.isNotEmpty()) {
-            playerController.addTracks(playlistState.value.tracks.toMediaItemList())
+        if (playlistState.value.isNotEmpty()) {
+            playerController.addTracks(playlistState.value.toMediaItemList())
         }
-
 
     }
 
@@ -101,21 +83,6 @@ class PlayerViewModel @Inject constructor(
         playerController.seekToTrack(selectedTrackIndex)
         stateUpdater.start()
     }
-//
-//    /**
-//     * Resets the state of each track in the list to the default state.
-//     */
-//    private fun MutableList<TrackState>.resetTracks() {
-//        this.forEach { track ->
-//            track.isSelected = false
-//        }
-//    }
-
-//    private fun commitTrackListUpdate() {
-//        val updatedTracksList = _tracks.toList()
-//        _tracks.clear()
-//        _tracks.addAll(updatedTracksList)
-//    }
 
     private fun checkOutControllerState() {
 
@@ -150,10 +117,10 @@ class PlayerViewModel @Inject constructor(
     private fun checkoutPlayerState() {
         playerController.playerStateCallbacks(
             onNextTrackAuto = {
-                updateCurrentTrackPlayingState(playerController.getCurrentTrackIndex())
+                playlistManager.updateIndex(playerController.getCurrentTrackIndex())
             },
             onTrackChangedByUser = {
-                updateCurrentTrackPlayingState(playerController.getCurrentTrackIndex())
+                playlistManager.updateIndex(playerController.getCurrentTrackIndex())
             },
             onPlaylistChanged = {
                 Log.d(MEDIA_CONTROLLER_TAG, "Playlist changed")
@@ -170,13 +137,6 @@ class PlayerViewModel @Inject constructor(
                 Log.d(MEDIA_CONTROLLER_TAG, "Player error")
             }
         )
-    }
-
-    private fun updateCurrentTrackPlayingState(index: Int) {
-//        _tracks.resetTracks()
-//        _tracks[index].isSelected = true
-//        commitTrackListUpdate()
-        playlistManager.updateIndex(index)
     }
 
     private fun emitPlaybackState() {
@@ -212,7 +172,7 @@ class PlayerViewModel @Inject constructor(
      * Switches to the previous track if one exists.
      */
     override fun onPreviousClick() {
-        playerController.previous { index -> updateCurrentTrackPlayingState(index) }
+        playerController.previous { index -> playlistManager.updateIndex(index) }
     }
 
     /**
@@ -220,7 +180,7 @@ class PlayerViewModel @Inject constructor(
      * Switches to the next track in the list if one exists.
      */
     override fun onNextClick() {
-        playerController.next { index -> updateCurrentTrackPlayingState(index) }
+        playerController.next { index -> playlistManager.updateIndex(index) }
     }
 
     /**
@@ -242,8 +202,8 @@ class PlayerViewModel @Inject constructor(
             }
         }
 
-        val selectedTrackIndex = playlistState.value.tracks.indexOf(track)
-        updateCurrentTrackPlayingState(selectedTrackIndex)
+        val selectedTrackIndex = playlistState.value.indexOf(track)
+        playlistManager.updateIndex(selectedTrackIndex)
         seekToSelectedTrack(selectedTrackIndex)
         playerController.play()
     }
@@ -259,8 +219,8 @@ class PlayerViewModel @Inject constructor(
     }
 
     /**
-     * Releases the media player and the media controller,
-     * stops the StateUpdater when the ViewModel is cleared.
+     * Releases the media controller
+     * and stops the StateUpdater when the ViewModel is cleared.
      */
     override fun onCleared() {
         super.onCleared()
@@ -280,11 +240,11 @@ class PlayerViewModel @Inject constructor(
             }
         }
 
-        Log.d(VM_TAG, "View-model is cleared")
+        Log.d(VM_TAG, "PlayerViewModel-class is cleared")
     }
 
     companion object {
-        const val MEDIA_CONTROLLER_TAG = "My media-controller"
+        const val MEDIA_CONTROLLER_TAG = "PlayerViewModel_MediaController"
         const val VM_TAG = "PlayerVM"
     }
 }

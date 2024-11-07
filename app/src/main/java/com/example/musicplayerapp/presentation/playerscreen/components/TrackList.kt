@@ -10,12 +10,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.musicplayerapp.player.PlaylistState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
 
 @Composable
 fun TrackList(
-    playlistState: PlaylistState,
+    tracks: List<TrackState>,
     onTrackClick: (track: TrackState) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -26,14 +25,8 @@ fun TrackList(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        items(playlistState.tracks) { track ->
-            if (playlistState.tracks.indexOf(track) == playlistState.currentIndex) {
-                TrackListItem(
-                    track = track.copy(isSelected = true),
-                    onTrackClick = { onTrackClick(track) })
-            } else {
+        items(tracks) { track ->
                 TrackListItem(track = track, onTrackClick = { onTrackClick(track) })
-            }
         }
     }
 }
@@ -41,8 +34,6 @@ fun TrackList(
 @Preview(showSystemUi = true)
 @Composable
 fun TrackListPreview() {
-
-    val currentIndex = 2
 
     val trackList = listOf(
         TrackState(trackName = "Track 1", artistName = "Android", isSelected = false),
@@ -52,7 +43,5 @@ fun TrackListPreview() {
         TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
     )
 
-    val playlistState = PlaylistState(currentIndex = currentIndex, tracks = trackList)
-
-    TrackList(playlistState = playlistState, onTrackClick = {})
+    TrackList(tracks = trackList, onTrackClick = {})
 }

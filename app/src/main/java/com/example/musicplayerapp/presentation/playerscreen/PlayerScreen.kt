@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.example.musicplayerapp.player.PlaylistState
 import com.example.musicplayerapp.presentation.playerscreen.components.PlayerBottomBar
 import com.example.musicplayerapp.presentation.playerscreen.components.TrackList
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
@@ -27,7 +26,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun PlayerScreen(
-    playlistState: PlaylistState,
+    playlistState: List<TrackState>,
     playerBarState: PlayerBarState,
     sliderProgressState: StateFlow<SliderProgressState>,
     onTrackClick: (track: TrackState) -> Unit,
@@ -45,7 +44,7 @@ fun PlayerScreen(
             .fillMaxSize()
             .background(color = PurpleGrey80)
     ) {
-        TrackList(playlistState = playlistState, onTrackClick = {
+        TrackList(tracks = playlistState, onTrackClick = {
             onTrackClick(it)
         })
         FloatingActionButton(
@@ -86,8 +85,6 @@ fun PlayerScreen(
     }
 }
 
-val currentIndex = 2
-
 val trackList = listOf(
     TrackState(trackName = "Track 1", artistName = "Android", isSelected = false),
     TrackState(trackName = "Track 2", artistName = "Android", isSelected = false),
@@ -105,9 +102,6 @@ val trackList = listOf(
 
     )
 
-val playlistState = PlaylistState(currentIndex = currentIndex, tracks = trackList)
-
-
 @Preview(showSystemUi = true)
 @Composable
 fun PlayerScreenPreview() {
@@ -122,7 +116,7 @@ fun PlayerScreenPreview() {
     val flow: StateFlow<SliderProgressState> = mutableFlow
 
     PlayerScreen(
-        playlistState = playlistState,
+        playlistState = trackList,
         playerBarState = PlayerBarState(),
         sliderProgressState = flow,
         onTrackClick = {},
@@ -148,7 +142,7 @@ fun PlayerScreenPlayingPreview() {
     val flow: StateFlow<SliderProgressState> = mutableFlow
 
     PlayerScreen(
-        playlistState = playlistState,
+        playlistState = trackList,
         playerBarState = PlayerBarState(
             playerState = PlayerUIState.PLAYING,
             barVisibility = PlayerBarVisibility.VISIBLE
