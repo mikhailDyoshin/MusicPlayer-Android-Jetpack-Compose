@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
                 ) {
 
                     PlayerScreen(
-                        tracks = viewModel.tracks,
+                        playlistState = viewModel.playlistState.value,
                         sliderProgressState = viewModel.sliderProgressState,
                         playerBarState = viewModel.playerBarState.value,
                         onTrackClick = { viewModel.onTrackClick(it) },

@@ -2,15 +2,15 @@ package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
 import com.example.musicplayerapp.config.UPDATE_DELAY
 import com.example.musicplayerapp.controller.PlayerController
-import com.example.musicplayerapp.domain.models.AudioUrisListModel
-import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.MusicPlayerInterface
+import com.example.musicplayerapp.player.PlaylistManager
+import com.example.musicplayerapp.player.PlaylistState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarVisibility
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerUIState
@@ -26,14 +26,15 @@ import javax.inject.Inject
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
     private val playerController: PlayerController,
-    private val getTracksUseCase: GetTracksUseCase,
+    private val playlistManager: PlaylistManager
+//    private val getTracksUseCase: GetTracksUseCase,
 ) : ViewModel(), MusicPlayerInterface {
 
     /**
      * State that stores a list of all tracks.
      */
-    private val _tracks = mutableStateListOf<TrackState>()
-    val tracks: List<TrackState> get() = _tracks
+//    private val _tracks = mutableStateListOf<TrackState>()
+    val playlistState: State<PlaylistState> = playlistManager.playlistState
 
     /**
      * It emits updated playback state to observers.
@@ -73,44 +74,48 @@ class PlayerViewModel @Inject constructor(
      */
     fun addTracks(urisList: List<Uri>) {
 
-        val newTracks = getTracksUseCase.execute(AudioUrisListModel(urisList)).map {
-            Log.d("Music tracks", it.trackUri)
-            TrackState(
-                trackId = it.trackId,
-                trackName = it.trackName,
-                trackUrl = it.trackUri,
-                trackImage = it.trackImage,
-                artistName = it.artistName,
-                isSelected = it.isSelected,
-            )
+//        val newTracks = getTracksUseCase.execute(AudioUrisListModel(urisList)).map {
+//            Log.d("Music tracks", it.trackUri)
+//            TrackState(
+//                trackId = it.trackId,
+//                trackName = it.trackName,
+//                trackUrl = it.trackUri,
+//                trackImage = it.trackImage,
+//                artistName = it.artistName,
+//                isSelected = it.isSelected,
+//            )
+//        }
+//
+//        _tracks.addAll(newTracks)
+//
+        playlistManager.addTracks(urisList)
+
+        if (playlistState.value.tracks.isNotEmpty()) {
+            playerController.addTracks(playlistState.value.tracks.toMediaItemList())
         }
 
-        _tracks.addAll(newTracks)
 
-        if (_tracks.isNotEmpty()) {
-            playerController.addTracks(newTracks.toMediaItemList())
-        }
     }
 
     private fun seekToSelectedTrack(selectedTrackIndex: Int) {
         playerController.seekToTrack(selectedTrackIndex)
         stateUpdater.start()
     }
+//
+//    /**
+//     * Resets the state of each track in the list to the default state.
+//     */
+//    private fun MutableList<TrackState>.resetTracks() {
+//        this.forEach { track ->
+//            track.isSelected = false
+//        }
+//    }
 
-    /**
-     * Resets the state of each track in the list to the default state.
-     */
-    private fun MutableList<TrackState>.resetTracks() {
-        this.forEach { track ->
-            track.isSelected = false
-        }
-    }
-
-    private fun commitTrackListUpdate() {
-        val updatedTracksList = _tracks.toList()
-        _tracks.clear()
-        _tracks.addAll(updatedTracksList)
-    }
+//    private fun commitTrackListUpdate() {
+//        val updatedTracksList = _tracks.toList()
+//        _tracks.clear()
+//        _tracks.addAll(updatedTracksList)
+//    }
 
     private fun checkOutControllerState() {
 
@@ -168,9 +173,10 @@ class PlayerViewModel @Inject constructor(
     }
 
     private fun updateCurrentTrackPlayingState(index: Int) {
-        _tracks.resetTracks()
-        _tracks[index].isSelected = true
-        commitTrackListUpdate()
+//        _tracks.resetTracks()
+//        _tracks[index].isSelected = true
+//        commitTrackListUpdate()
+        playlistManager.updateIndex(index)
     }
 
     private fun emitPlaybackState() {
@@ -236,7 +242,7 @@ class PlayerViewModel @Inject constructor(
             }
         }
 
-        val selectedTrackIndex = tracks.indexOf(track)
+        val selectedTrackIndex = playlistState.value.tracks.indexOf(track)
         updateCurrentTrackPlayingState(selectedTrackIndex)
         seekToSelectedTrack(selectedTrackIndex)
         playerController.play()

@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.example.musicplayerapp.player.PlaylistState
 import com.example.musicplayerapp.presentation.playerscreen.components.PlayerBottomBar
 import com.example.musicplayerapp.presentation.playerscreen.components.TrackList
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
@@ -26,7 +27,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun PlayerScreen(
-    tracks: List<TrackState>,
+    playlistState: PlaylistState,
     playerBarState: PlayerBarState,
     sliderProgressState: StateFlow<SliderProgressState>,
     onTrackClick: (track: TrackState) -> Unit,
@@ -44,7 +45,7 @@ fun PlayerScreen(
             .fillMaxSize()
             .background(color = PurpleGrey80)
     ) {
-        TrackList(tracks = tracks, onTrackClick = {
+        TrackList(playlistState = playlistState, onTrackClick = {
             onTrackClick(it)
         })
         FloatingActionButton(
@@ -85,26 +86,33 @@ fun PlayerScreen(
     }
 }
 
+val currentIndex = 2
+
+val trackList = listOf(
+    TrackState(trackName = "Track 1", artistName = "Android", isSelected = false),
+    TrackState(trackName = "Track 2", artistName = "Android", isSelected = false),
+    TrackState(trackName = "Track 3", artistName = "Android", isSelected = true),
+    TrackState(trackName = "Track 4", artistName = "Android", isSelected = false),
+    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+
+    )
+
+val playlistState = PlaylistState(currentIndex = currentIndex, tracks = trackList)
+
 
 @Preview(showSystemUi = true)
 @Composable
 fun PlayerScreenPreview() {
-    val trackList = listOf(
-        TrackState(trackName = "Track 1", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 2", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 3", artistName = "Android", isSelected = true),
-        TrackState(trackName = "Track 4", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
 
-        )
+
 
     val currentPosition = 50000L
     val trackDuration = 500000L
@@ -114,7 +122,7 @@ fun PlayerScreenPreview() {
     val flow: StateFlow<SliderProgressState> = mutableFlow
 
     PlayerScreen(
-        tracks = trackList,
+        playlistState = playlistState,
         playerBarState = PlayerBarState(),
         sliderProgressState = flow,
         onTrackClick = {},
@@ -131,22 +139,6 @@ fun PlayerScreenPreview() {
 @Preview(showSystemUi = true)
 @Composable
 fun PlayerScreenPlayingPreview() {
-    val trackList = listOf(
-        TrackState(trackName = "Track 1", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 2", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 3", artistName = "Android", isSelected = true),
-        TrackState(trackName = "Track 4", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-
-        )
 
     val currentPosition = 50000L
     val trackDuration = 500000L
@@ -156,7 +148,7 @@ fun PlayerScreenPlayingPreview() {
     val flow: StateFlow<SliderProgressState> = mutableFlow
 
     PlayerScreen(
-        tracks = trackList,
+        playlistState = playlistState,
         playerBarState = PlayerBarState(
             playerState = PlayerUIState.PLAYING,
             barVisibility = PlayerBarVisibility.VISIBLE
