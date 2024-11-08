@@ -27,6 +27,9 @@ class PlayerNotificationManager(
     private val notificationBuilder =
         mutableStateOf(NotificationCompat.Builder(context, CHANNEL_ID))
 
+    private val actionIntentsMap =
+        PlayerNotificationAction.entries.associateWith { createActionIntent(it) }
+
     fun setUpNotification() {
         createChannel()
         createNotification()
@@ -74,21 +77,11 @@ class PlayerNotificationManager(
 
     fun updateNotification(isPlaying: Boolean) {
 
-        // Define intents
-        val repeatPendingIntent =
-            createActionIntent(PlayerNotificationAction.ACTION_REWIND)
 
-        val prevPendingIntent =
-            createActionIntent(PlayerNotificationAction.ACTION_PREVIOUS)
-
-        val pauseIntent = createActionIntent(PlayerNotificationAction.ACTION_PAUSE)
-
-        val playIntent = createActionIntent(PlayerNotificationAction.ACTION_PLAY)
-
-        val playPausePendingIntent = if (isPlaying) pauseIntent else playIntent
-
-        val nextPendingIntent =
-            createActionIntent(PlayerNotificationAction.ACTION_NEXT)
+        val playPausePendingIntent = when (isPlaying) {
+            true -> actionIntentsMap[PlayerNotificationAction.ACTION_PAUSE]
+            false -> actionIntentsMap[PlayerNotificationAction.ACTION_PLAY]
+        }
 
         // Define icons
         val playPauseIcon =
@@ -103,22 +96,22 @@ class PlayerNotificationManager(
             .addAction(
                 R.drawable.rewind_icon,
                 "Repeat all",
-                repeatPendingIntent
+                actionIntentsMap[PlayerNotificationAction.ACTION_REWIND]
             )
             .addAction(
                 R.drawable.arrow_left,
                 "Previous",
-                prevPendingIntent
+                actionIntentsMap[PlayerNotificationAction.ACTION_PREVIOUS]
             ) // #0
             .addAction(
                 playPauseIcon,
-                "Pause",
+                "Play/Pause",
                 playPausePendingIntent
             ) // #1
             .addAction(
                 R.drawable.arrow_right,
                 "Next",
-                nextPendingIntent
+                actionIntentsMap[PlayerNotificationAction.ACTION_NEXT]
             ) // #2
 
     }
@@ -171,6 +164,7 @@ class PlayerNotificationManager(
             ACTION_PREVIOUS("com.example.musicplayerapp.ACTION_PREVIOUS"),
             ACTION_NEXT("com.example.musicplayerapp.ACTION_NEXT"),
         }
+
     }
 
 }
