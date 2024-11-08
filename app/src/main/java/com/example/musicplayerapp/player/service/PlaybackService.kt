@@ -1,15 +1,12 @@
 package com.example.musicplayerapp.player.service
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
-import androidx.core.app.NotificationCompat
 import androidx.media3.common.Player
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
@@ -17,24 +14,23 @@ import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaNotification
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import androidx.media3.session.MediaStyleNotificationHelper
-import com.example.musicplayerapp.R
+import com.example.musicplayerapp.player.notification.PlayerNotificationManager
 import com.example.musicplayerapp.utils.modulo
 import com.google.common.collect.ImmutableList
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@UnstableApi
+@RequiresApi(Build.VERSION_CODES.O)
 @AndroidEntryPoint
-class PlaybackService : MediaSessionService(), Player.Listener {
+class PlaybackService : MediaSessionService() {
 
     @Inject
     lateinit var mediaSession: MediaSession
 
     private lateinit var player: Player
     private lateinit var notificationManager: NotificationManager
-    private lateinit var nBuilder: NotificationCompat.Builder
-
-    private var isPlaying = false
+    private lateinit var playerNotificationManager: PlayerNotificationManager
 
     @RequiresApi(Build.VERSION_CODES.O)
     @OptIn(UnstableApi::class)
@@ -44,9 +40,16 @@ class PlaybackService : MediaSessionService(), Player.Listener {
         player = mediaSession.player
 
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        createNotification(mediaSession)
 
-        player.addListener(this)
+        playerNotificationManager = PlayerNotificationManager(
+            context = this,
+            session = mediaSession,
+            notificationManager = notificationManager
+        )
+
+        playerNotificationManager.setUpNotification()
+
+        playerNotificationManager.setUpNotification()
 
         this.setMediaNotificationProvider(object : MediaNotification.Provider {
             @RequiresApi(Build.VERSION_CODES.O)
@@ -56,9 +59,9 @@ class PlaybackService : MediaSessionService(), Player.Listener {
                 actionFactory: MediaNotification.ActionFactory,
                 onNotificationChangedCallback: MediaNotification.Provider.Callback
             ): MediaNotification {
-                createNotification(mediaSession)
+                updateNotificationAccordingToPlayerState()
                 // notification should be created before you return here
-                return MediaNotification(NOTIFICATION_ID, nBuilder.build())
+                return playerNotificationManager.getMediaNotification()
             }
 
             override fun handleCustomCommand(
@@ -76,60 +79,57 @@ class PlaybackService : MediaSessionService(), Player.Listener {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession =
         mediaSession
 
-    @OptIn(UnstableApi::class)
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun createNotification(session: MediaSession) {
-
-        notificationManager.createNotificationChannel(
-            NotificationChannel(
-                CHANNEL_ID,
-                "Channel",
-                NotificationManager.IMPORTANCE_NONE
-            )
-        )
-
-        // NotificationCompat.Builder here.
-        nBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setSmallIcon(R.drawable.note_svg)
-            .setStyle(
-                MediaStyleNotificationHelper.MediaStyle(session)
-                    .setShowActionsInCompactView(
-                        1, /* #1: previous button \*/
-                        2, /* #2: play/pause button \*/
-                        3, /* #3: next button \*/
-                    )
-            )
-
-        updateNotificationOnPlayPause()
-
-    }
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let {
-            when (it.action) {
-                PlayerNotificationAction.ACTION_SEEK_BACK.actionString -> {
-                    player.seekTo(0)
-                }
-
-                PlayerNotificationAction.ACTION_PLAY.actionString -> {
-                    player.play()
-                }
-
-                PlayerNotificationAction.ACTION_PAUSE.actionString -> {
-                    player.pause()
-                }
-
-                PlayerNotificationAction.ACTION_PREVIOUS.actionString -> {
-                    seekToPrevious()
-                }
-
-                PlayerNotificationAction.ACTION_NEXT.actionString -> {
-                    seekToNext()
-                }
-            }
+            playerNotificationManager.onAction(
+                action = it.action,
+                onRewind = { player.seekTo(0) },
+                onPrevious = { seekToPrevious() },
+                onPause = { player.pause() },
+                onPlay = { player.play() },
+                onNext = { seekToNext() })
         }
         return super.onStartCommand(intent, flags, startId)
+    }
+
+    fun updateNotificationAccordingToPlayerState() {
+        player.addListener(
+            object : Player.Listener {
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    super.onPlaybackStateChanged(playbackState)
+                    when (playbackState) {
+                        Player.STATE_READY -> {
+                            if (player.playWhenReady) {
+                                playerNotificationManager.updateNotification(isPlaying = true)
+                            } else {
+                                playerNotificationManager.updateNotification(isPlaying = false)
+                            }
+                        }
+
+                        Player.STATE_IDLE -> {
+                            playerNotificationManager.updateNotification(isPlaying = false)
+                        }
+
+                        Player.STATE_ENDED -> {
+                            playerNotificationManager.updateNotification(isPlaying = false)
+                        }
+
+                        Player.STATE_BUFFERING -> {
+                            playerNotificationManager.updateNotification(isPlaying = player.playWhenReady)
+                        }
+                    }
+
+                }
+
+                override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                    if (playWhenReady) {
+                        playerNotificationManager.updateNotification(isPlaying = true)
+                    } else {
+                        playerNotificationManager.updateNotification(isPlaying = false)
+                    }
+                }
+            }
+        )
     }
 
     @OptIn(UnstableApi::class)
@@ -146,7 +146,7 @@ class PlaybackService : MediaSessionService(), Player.Listener {
                 Log.d(PLAYBACK_SERVICE_TAG, "Service was stopped: no media items")
             }
 
-            notificationManager.cancel(NOTIFICATION_ID)
+            playerNotificationManager.cancel()
         }
 
         Log.d(PLAYBACK_SERVICE_TAG, "App was closed")
@@ -160,97 +160,6 @@ class PlaybackService : MediaSessionService(), Player.Listener {
         }
         super.onDestroy()
         Log.d(PLAYBACK_SERVICE_TAG, "Service is being destroyed")
-    }
-
-    override fun onPlaybackStateChanged(playbackState: Int) {
-        when (playbackState) {
-            Player.STATE_READY -> {
-                if (player.playWhenReady) {
-                    isPlaying = true
-                    updateNotificationOnPlayPause()
-                } else {
-                    isPlaying = false
-                    updateNotificationOnPlayPause()
-                }
-            }
-
-            Player.STATE_IDLE -> {
-                isPlaying = false
-                updateNotificationOnPlayPause()
-            }
-
-            Player.STATE_ENDED -> {
-                isPlaying = false
-                updateNotificationOnPlayPause()
-            }
-
-            Player.STATE_BUFFERING -> {
-
-            }
-        }
-    }
-
-    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-        if (playWhenReady) {
-            isPlaying = true
-            updateNotificationOnPlayPause()
-        } else {
-            isPlaying = false
-            updateNotificationOnPlayPause()
-        }
-    }
-
-    private fun updateNotificationOnPlayPause() {
-
-        // Define intents
-        val repeatPendingIntent =
-            createActionIntent(PlayerNotificationAction.ACTION_SEEK_BACK)
-
-        val prevPendingIntent =
-            createActionIntent(PlayerNotificationAction.ACTION_PREVIOUS)
-
-        val pauseIntent = createActionIntent(PlayerNotificationAction.ACTION_PAUSE)
-
-        val playIntent = createActionIntent(PlayerNotificationAction.ACTION_PLAY)
-
-        val playPausePendingIntent = if (isPlaying) pauseIntent else playIntent
-
-        val nextPendingIntent =
-            createActionIntent(PlayerNotificationAction.ACTION_NEXT)
-
-        // Define icons
-        val playPauseIcon =
-            if (isPlaying) {
-                R.drawable.pause_notif_icon
-            } else {
-                R.drawable.play_notif_icon
-            }
-
-        // Clear all actions in the notification
-        nBuilder.clearActions()
-
-            .addAction(
-                R.drawable.rewind_icon,
-                "Repeat all",
-                repeatPendingIntent
-            )
-            .addAction(
-                R.drawable.arrow_left,
-                "Previous",
-                prevPendingIntent
-            ) // #0
-            .addAction(
-                playPauseIcon,
-                "Pause",
-                playPausePendingIntent
-            ) // #1
-            .addAction(
-                R.drawable.arrow_right,
-                "Next",
-                nextPendingIntent
-            ) // #2
-
-        notificationManager.notify(NOTIFICATION_ID, nBuilder.build())
     }
 
     private fun seekToNext() {
@@ -272,26 +181,8 @@ class PlaybackService : MediaSessionService(), Player.Listener {
         player.seekTo(previousItemIndex, 0)
     }
 
-    private fun createActionIntent(action: PlayerNotificationAction): PendingIntent {
-        return PendingIntent.getService(
-            this,
-            0,
-            Intent(this, PlaybackService::class.java).setAction(action.actionString),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-    }
-
     companion object {
-        private const val NOTIFICATION_ID = 123
-        private const val CHANNEL_ID = "PlaybackServiceChannel"
         private const val PLAYBACK_SERVICE_TAG = "My playback service"
     }
 
-    enum class PlayerNotificationAction(val actionString: String) {
-        ACTION_SEEK_BACK("com.example.musicplayerapp.ACTION_SEEK_BACK"),
-        ACTION_PLAY("com.example.musicplayerapp.ACTION_PLAY"),
-        ACTION_PAUSE("com.example.musicplayerapp.ACTION_PAUSE"),
-        ACTION_PREVIOUS("com.example.musicplayerapp.ACTION_PREVIOUS"),
-        ACTION_NEXT("com.example.musicplayerapp.ACTION_NEXT"),
-    }
 }

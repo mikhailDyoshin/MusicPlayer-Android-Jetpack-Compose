@@ -18,21 +18,57 @@ import com.example.musicplayerapp.player.service.PlaybackService
 
 @UnstableApi
 @RequiresApi(Build.VERSION_CODES.O)
-class PlayerNotification(private val context: Context, private val session: MediaSession, private val notificationManager: NotificationManager) {
+class PlayerNotificationManager(
+    private val context: Context,
+    private val session: MediaSession?,
+    private val notificationManager: NotificationManager
+) {
 
-    private val notificationBuilder = mutableStateOf(NotificationCompat.Builder(context, CHANNEL_ID))
+    private val notificationBuilder =
+        mutableStateOf(NotificationCompat.Builder(context, CHANNEL_ID))
 
     fun setUpNotification() {
         createChannel()
         createNotification()
     }
 
-    fun notify() {
-        notificationManager.notify(NOTIFICATION_ID, notificationBuilder.value.build())
-    }
-
     fun getMediaNotification(): MediaNotification {
         return MediaNotification(NOTIFICATION_ID, notificationBuilder.value.build())
+    }
+
+    fun cancel() {
+        notificationManager.cancel(NOTIFICATION_ID)
+    }
+
+    fun onAction(
+        action: String?,
+        onRewind: () -> Unit,
+        onPrevious: () -> Unit,
+        onPause: () -> Unit,
+        onPlay: () -> Unit,
+        onNext: () -> Unit
+    ) {
+        when (action) {
+            PlayerNotificationAction.ACTION_REWIND.actionString -> {
+                onRewind()
+            }
+
+            PlayerNotificationAction.ACTION_PREVIOUS.actionString -> {
+                onPrevious()
+            }
+
+            PlayerNotificationAction.ACTION_PAUSE.actionString -> {
+                onPause()
+            }
+
+            PlayerNotificationAction.ACTION_PLAY.actionString -> {
+                onPlay()
+            }
+
+            PlayerNotificationAction.ACTION_NEXT.actionString -> {
+                onNext()
+            }
+        }
     }
 
 
@@ -103,12 +139,14 @@ class PlayerNotification(private val context: Context, private val session: Medi
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setSmallIcon(R.drawable.note_svg)
             .setStyle(
-                MediaStyleNotificationHelper.MediaStyle(session)
-                    .setShowActionsInCompactView(
-                        1, /* #1: previous button \*/
-                        2, /* #2: play/pause button \*/
-                        3, /* #3: next button \*/
-                    )
+                session?.let {
+                    MediaStyleNotificationHelper.MediaStyle(it)
+                        .setShowActionsInCompactView(
+                            1, /* #1: previous button \*/
+                            2, /* #2: play/pause button \*/
+                            3, /* #3: next button \*/
+                        )
+                }
             )
     }
 
@@ -126,7 +164,7 @@ class PlayerNotification(private val context: Context, private val session: Medi
         private const val NOTIFICATION_ID = 123
         private const val CHANNEL_ID = "PlaybackServiceChannel"
 
-        enum class PlayerNotificationAction(val actionString: String) {
+        private enum class PlayerNotificationAction(val actionString: String) {
             ACTION_REWIND("com.example.musicplayerapp.ACTION_REWIND"),
             ACTION_PLAY("com.example.musicplayerapp.ACTION_PLAY"),
             ACTION_PAUSE("com.example.musicplayerapp.ACTION_PAUSE"),
