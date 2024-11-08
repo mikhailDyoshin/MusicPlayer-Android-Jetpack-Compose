@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
 import com.example.musicplayerapp.config.UPDATE_DELAY
-import com.example.musicplayerapp.controller.PlayerController
+import com.example.musicplayerapp.player.controller.PlayerController
 import com.example.musicplayerapp.player.MusicPlayerInterface
 import com.example.musicplayerapp.player.PlaylistManager
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState

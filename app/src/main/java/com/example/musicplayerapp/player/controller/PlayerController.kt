@@ -1,4 +1,4 @@
-package com.example.musicplayerapp.controller
+package com.example.musicplayerapp.player.controller
 
 import android.content.ComponentName
 import android.content.Context
@@ -9,7 +9,7 @@ import androidx.media3.session.SessionToken
 import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.MusicPlayer
 import com.example.musicplayerapp.player.PlayerState
-import com.example.musicplayerapp.service.PlaybackService
+import com.example.musicplayerapp.player.service.PlaybackService
 import com.example.musicplayerapp.utils.modulo
 import com.google.common.util.concurrent.MoreExecutors
 import javax.inject.Inject
