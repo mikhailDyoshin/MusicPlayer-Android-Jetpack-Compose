@@ -1,17 +1,14 @@
 package com.example.musicplayerapp.service
 
-import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
-import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.Player
 import androidx.media3.common.util.Log
@@ -21,11 +18,11 @@ import androidx.media3.session.MediaNotification
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.MediaStyleNotificationHelper
+import com.example.musicplayerapp.R
 import com.example.musicplayerapp.utils.modulo
 import com.google.common.collect.ImmutableList
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import kotlin.math.abs
 
 @AndroidEntryPoint
 class PlaybackService : MediaSessionService(), Player.Listener {
@@ -76,7 +73,7 @@ class PlaybackService : MediaSessionService(), Player.Listener {
         Log.d(PLAYBACK_SERVICE_TAG, "Service was created")
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession =
         mediaSession
 
     @OptIn(UnstableApi::class)
@@ -94,7 +91,7 @@ class PlaybackService : MediaSessionService(), Player.Listener {
         // NotificationCompat.Builder here.
         nBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setSmallIcon(androidx.media3.ui.R.drawable.exo_icon_vr)
+            .setSmallIcon(R.drawable.note_svg)
             .setStyle(
                 MediaStyleNotificationHelper.MediaStyle(session)
                     .setShowActionsInCompactView(
@@ -207,38 +204,38 @@ class PlaybackService : MediaSessionService(), Player.Listener {
 
         // Define intents
         val repeatPendingIntent =
-            createActionIntent(PlayerNotificationAction.ACTION_SEEK_BACK.actionString)
+            createActionIntent(PlayerNotificationAction.ACTION_SEEK_BACK)
 
         val prevPendingIntent =
-            createActionIntent(PlayerNotificationAction.ACTION_PREVIOUS.actionString)
+            createActionIntent(PlayerNotificationAction.ACTION_PREVIOUS)
 
-        val pauseIntent = createActionIntent(PlayerNotificationAction.ACTION_PAUSE.actionString)
+        val pauseIntent = createActionIntent(PlayerNotificationAction.ACTION_PAUSE)
 
-        val playIntent = createActionIntent(PlayerNotificationAction.ACTION_PLAY.actionString)
+        val playIntent = createActionIntent(PlayerNotificationAction.ACTION_PLAY)
 
         val playPausePendingIntent = if (isPlaying) pauseIntent else playIntent
 
         val nextPendingIntent =
-            createActionIntent(PlayerNotificationAction.ACTION_NEXT.actionString)
+            createActionIntent(PlayerNotificationAction.ACTION_NEXT)
 
         // Define icons
         val playPauseIcon =
             if (isPlaying) {
-                androidx.media3.ui.R.drawable.exo_notification_pause
+                R.drawable.pause_notif_icon
             } else {
-                androidx.media3.ui.R.drawable.exo_notification_play
+                R.drawable.play_notif_icon
             }
 
         // Clear all actions in the notification
         nBuilder.clearActions()
 
             .addAction(
-                androidx.media3.ui.R.drawable.exo_styled_controls_rewind,
+                R.drawable.rewind_icon,
                 "Repeat all",
                 repeatPendingIntent
             )
             .addAction(
-                androidx.media3.ui.R.drawable.exo_notification_previous,
+                R.drawable.arrow_left,
                 "Previous",
                 prevPendingIntent
             ) // #0
@@ -248,7 +245,7 @@ class PlaybackService : MediaSessionService(), Player.Listener {
                 playPausePendingIntent
             ) // #1
             .addAction(
-                androidx.media3.ui.R.drawable.exo_notification_next,
+                R.drawable.arrow_right,
                 "Next",
                 nextPendingIntent
             ) // #2
@@ -275,11 +272,11 @@ class PlaybackService : MediaSessionService(), Player.Listener {
         player.seekTo(previousItemIndex, 0)
     }
 
-    private fun createActionIntent(action: String): PendingIntent {
+    private fun createActionIntent(action: PlayerNotificationAction): PendingIntent {
         return PendingIntent.getService(
             this,
             0,
-            Intent(this, PlaybackService::class.java).setAction(action),
+            Intent(this, PlaybackService::class.java).setAction(action.actionString),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
