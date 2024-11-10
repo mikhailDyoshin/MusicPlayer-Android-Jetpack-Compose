@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.media3.common.MediaItem
 import com.example.musicplayerapp.config.UPDATE_DELAY
 import com.example.musicplayerapp.player.controller.PlayerController
 import com.example.musicplayerapp.player.MusicPlayerInterface
@@ -58,25 +57,10 @@ class PlayerViewModel @Inject constructor(
     )
 
     /**
-     * Converts a list of [TrackState] objects into a mutable list of [MediaItem] objects.
-     *
-     * @return A mutable list of [MediaItem] objects.
-     */
-    private fun List<TrackState>.toMediaItemList(): MutableList<MediaItem> {
-        return this.map { MediaItem.fromUri(it.trackUrl) }.toMutableList()
-    }
-
-    /**
      * Loads tracks from content provider
      */
     fun addTracks(urisList: List<Uri>) {
-
         playlistManager.addTracks(urisList)
-
-        if (playlistState.value.isNotEmpty()) {
-            playerController.addTracks(playlistState.value.toMediaItemList())
-        }
-
     }
 
     private fun seekToSelectedTrack(selectedTrackIndex: Int) {
