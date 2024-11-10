@@ -13,6 +13,7 @@ import com.example.musicplayerapp.presentation.playerscreen.PlayerScreen
 import com.example.musicplayerapp.presentation.playerscreen.viewmodel.PlayerViewModel
 import com.example.musicplayerapp.ui.theme.MusicPlayerAppTheme
 import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -40,7 +41,7 @@ class MainActivity : ComponentActivity() {
                 ) {
 
                     PlayerScreen(
-                        playlistState = viewModel.playlistState.value,
+                        playlistState = viewModel.playlistState.collectAsState(initial = emptyList()).value,
                         sliderProgressState = viewModel.sliderProgressState,
                         playerBarState = viewModel.playerBarState.value,
                         onTrackClick = { viewModel.onTrackClick(it) },

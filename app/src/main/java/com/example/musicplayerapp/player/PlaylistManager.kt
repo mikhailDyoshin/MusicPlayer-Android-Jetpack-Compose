@@ -2,13 +2,14 @@ package com.example.musicplayerapp.player
 
 import android.net.Uri
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.media3.common.MediaItem
 import com.example.musicplayerapp.domain.models.AudioUrisListModel
 import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.controller.PlayerController
 import com.example.musicplayerapp.player.state.TrackState
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 class PlaylistManager @Inject constructor(
@@ -18,8 +19,8 @@ class PlaylistManager @Inject constructor(
 
     private val currentIndex: MutableState<Int?> = mutableStateOf(null)
 
-    private val _tracksState: MutableState<List<TrackState>> = mutableStateOf(emptyList())
-    val tracksState: State<List<TrackState>> = _tracksState
+    private val _tracksState: MutableStateFlow<List<TrackState>> = MutableStateFlow(emptyList())
+    val tracksState: StateFlow<List<TrackState>> get() = _tracksState
 
     fun addTracks(listOfURIs: List<Uri>) {
         val newTracks = getTracksFromURIs(listOfURIs)
@@ -31,6 +32,13 @@ class PlaylistManager @Inject constructor(
     fun updateIndex(newIndex: Int) {
         currentIndex.value = newIndex
         setTrackToSelectedState(newIndex)
+    }
+
+    fun setActiveTrack(track: TrackState): Int {
+        val currentPlaylist = tracksState.value
+        val selectedTrackIndex = currentPlaylist.indexOf(track)
+        updateIndex(selectedTrackIndex)
+        return selectedTrackIndex
     }
 
     private fun addTracksToPlayer(newTracks: List<TrackState>) {

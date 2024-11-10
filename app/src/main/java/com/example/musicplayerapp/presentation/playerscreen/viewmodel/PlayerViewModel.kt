@@ -2,8 +2,6 @@ package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.musicplayerapp.config.UPDATE_DELAY
@@ -18,8 +16,10 @@ import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgress
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackUIState
 import com.example.musicplayerapp.utils.StateUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,8 +31,7 @@ class PlayerViewModel @Inject constructor(
     /**
      * State that stores a list of all tracks.
      */
-    private val _playlistState: MutableState<List<TrackUIState>> = mutableStateOf(emptyList())
-    val playlistState: State<List<TrackUIState>> = _playlistState
+    val playlistState: Flow<List<TrackUIState>> = getFlowOfTracks()
 
     /**
      * It emits updated playback state to observers.
@@ -63,8 +62,10 @@ class PlayerViewModel @Inject constructor(
      */
     fun addTracks(urisList: List<Uri>) {
         playlistManager.addTracks(urisList)
+    }
 
-        _playlistState.value = playlistManager.tracksState.value.toTrackUIStateList()
+    private fun getFlowOfTracks(): Flow<List<TrackUIState>> {
+        return playlistManager.tracksState.map { list -> list.map { track -> track.toTrackUIState() } }
     }
 
     private fun seekToSelectedTrack(selectedTrackIndex: Int) {
@@ -72,16 +73,26 @@ class PlayerViewModel @Inject constructor(
         stateUpdater.start()
     }
 
-    private fun List<TrackState>.toTrackUIStateList(): List<TrackUIState> {
-        return this.map {
-            TrackUIState(
-                trackId = it.trackId,
-                trackName = it.trackName,
-                trackUrl = it.trackUrl,
-                trackImage = it.trackImage,
-                isSelected = it.isSelected
-            )
-        }
+    private fun TrackState.toTrackUIState(): TrackUIState {
+        return TrackUIState(
+            trackId = this.trackId,
+            trackName = this.trackName,
+            trackUrl = this.trackUrl,
+            trackImage = this.trackImage,
+            isSelected = this.isSelected
+        )
+
+    }
+
+    private fun TrackUIState.toTrackState(): TrackState {
+        return TrackState(
+            trackId = this.trackId,
+            trackName = this.trackName,
+            trackUrl = this.trackUrl,
+            trackImage = this.trackImage,
+            isSelected = this.isSelected
+        )
+
     }
 
     private fun checkOutControllerState() {
@@ -188,8 +199,7 @@ class PlayerViewModel @Inject constructor(
             }
         }
 
-        val selectedTrackIndex = playlistState.value.indexOf(track)
-        playlistManager.updateIndex(selectedTrackIndex)
+        val selectedTrackIndex = playlistManager.setActiveTrack(track.toTrackState())
         seekToSelectedTrack(selectedTrackIndex)
         playerController.play()
     }
