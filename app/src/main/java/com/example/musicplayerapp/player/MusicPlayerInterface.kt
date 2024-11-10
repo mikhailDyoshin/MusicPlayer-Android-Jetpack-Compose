@@ -1,6 +1,6 @@
 package com.example.musicplayerapp.player
 
-import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
+import com.example.musicplayerapp.player.state.TrackState
 
 interface MusicPlayerInterface {
 

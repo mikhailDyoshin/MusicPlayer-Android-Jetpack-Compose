@@ -10,12 +10,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
+import com.example.musicplayerapp.presentation.playerscreen.state.TrackUIState
 
 @Composable
 fun TrackList(
-    tracks: List<TrackState>,
-    onTrackClick: (track: TrackState) -> Unit,
+    tracks: List<TrackUIState>,
+    onTrackClick: (track: TrackUIState) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -36,11 +36,11 @@ fun TrackList(
 fun TrackListPreview() {
 
     val trackList = listOf(
-        TrackState(trackName = "Track 1", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 2", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 3", artistName = "Android", isSelected = true),
-        TrackState(trackName = "Track 4", artistName = "Android", isSelected = false),
-        TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+        TrackUIState(trackName = "Track 1", artistName = "Android", isSelected = false),
+        TrackUIState(trackName = "Track 2", artistName = "Android", isSelected = false),
+        TrackUIState(trackName = "Track 3", artistName = "Android", isSelected = true),
+        TrackUIState(trackName = "Track 4", artistName = "Android", isSelected = false),
+        TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
     )
 
     TrackList(tracks = trackList, onTrackClick = {})

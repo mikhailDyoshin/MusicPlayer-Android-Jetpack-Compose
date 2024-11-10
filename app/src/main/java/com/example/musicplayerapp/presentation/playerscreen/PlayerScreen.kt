@@ -19,17 +19,17 @@ import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarVisibility
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerUIState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
-import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
+import com.example.musicplayerapp.presentation.playerscreen.state.TrackUIState
 import com.example.musicplayerapp.ui.theme.PurpleGrey80
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun PlayerScreen(
-    playlistState: List<TrackState>,
+    playlistState: List<TrackUIState>,
     playerBarState: PlayerBarState,
     sliderProgressState: StateFlow<SliderProgressState>,
-    onTrackClick: (track: TrackState) -> Unit,
+    onTrackClick: (track: TrackUIState) -> Unit,
     onSeekBarPositionChanged: (currentProgress: Long) -> Unit,
     onSeekBarPositionChanging: () -> Unit,
     onPlay: () -> Unit,
@@ -86,19 +86,19 @@ fun PlayerScreen(
 }
 
 val trackList = listOf(
-    TrackState(trackName = "Track 1", artistName = "Android", isSelected = false),
-    TrackState(trackName = "Track 2", artistName = "Android", isSelected = false),
-    TrackState(trackName = "Track 3", artistName = "Android", isSelected = true),
-    TrackState(trackName = "Track 4", artistName = "Android", isSelected = false),
-    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackUIState(trackName = "Track 1", artistName = "Android", isSelected = false),
+    TrackUIState(trackName = "Track 2", artistName = "Android", isSelected = false),
+    TrackUIState(trackName = "Track 3", artistName = "Android", isSelected = true),
+    TrackUIState(trackName = "Track 4", artistName = "Android", isSelected = false),
+    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
+    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
 
     )
 

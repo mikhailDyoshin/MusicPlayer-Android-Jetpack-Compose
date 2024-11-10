@@ -1,6 +1,4 @@
-package com.example.musicplayerapp.presentation.playerscreen.state
-
-import com.example.musicplayerapp.player.PlayerState
+package com.example.musicplayerapp.player.state
 
 data class TrackState(
     val trackId: Int = 0,

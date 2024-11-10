@@ -14,7 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
+import com.example.musicplayerapp.presentation.playerscreen.state.TrackUIState
 import com.example.musicplayerapp.ui.theme.PurpleGrey40
 
 /**
@@ -26,7 +26,7 @@ import com.example.musicplayerapp.ui.theme.PurpleGrey40
  * @param onTrackClick The action to be performed when the track item is clicked.
  */
 @Composable
-fun TrackListItem(track: TrackState, onTrackClick: () -> Unit) {
+fun TrackListItem(track: TrackUIState, onTrackClick: () -> Unit) {
     val bgColor = if (track.isSelected) PurpleGrey40 else Color.White
     val textColor = Color.Black
 //        if (track.isSelected) Color.Gray else Color.Black
@@ -57,7 +57,7 @@ fun TrackListItem(track: TrackState, onTrackClick: () -> Unit) {
 fun TrackListItemPreview() {
 
     TrackListItem(
-        track = TrackState(
+        track = TrackUIState(
             trackName = "Test track",
             artistName = "Android",
             isSelected = false
@@ -70,7 +70,7 @@ fun TrackListItemPreview() {
 fun TrackListItemSelectedPreview() {
 
     TrackListItem(
-        track = TrackState(
+        track = TrackUIState(
             trackName = "Test track",
             artistName = "Android",
             isSelected = true

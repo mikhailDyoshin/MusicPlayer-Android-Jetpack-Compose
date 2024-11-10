@@ -2,19 +2,20 @@ package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 
 import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.musicplayerapp.config.UPDATE_DELAY
 import com.example.musicplayerapp.player.controller.PlayerController
-import com.example.musicplayerapp.player.MusicPlayerInterface
 import com.example.musicplayerapp.player.PlaylistManager
+import com.example.musicplayerapp.player.state.TrackState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarVisibility
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerUIState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
-import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
+import com.example.musicplayerapp.presentation.playerscreen.state.TrackUIState
 import com.example.musicplayerapp.utils.StateUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,12 +26,13 @@ import javax.inject.Inject
 class PlayerViewModel @Inject constructor(
     private val playerController: PlayerController,
     private val playlistManager: PlaylistManager
-) : ViewModel(), MusicPlayerInterface {
+) : ViewModel() {
 
     /**
      * State that stores a list of all tracks.
      */
-    val playlistState: State<List<TrackState>> = playlistManager.tracksState
+    private val _playlistState: MutableState<List<TrackUIState>> = mutableStateOf(emptyList())
+    val playlistState: State<List<TrackUIState>> = _playlistState
 
     /**
      * It emits updated playback state to observers.
@@ -61,11 +63,25 @@ class PlayerViewModel @Inject constructor(
      */
     fun addTracks(urisList: List<Uri>) {
         playlistManager.addTracks(urisList)
+
+        _playlistState.value = playlistManager.tracksState.value.toTrackUIStateList()
     }
 
     private fun seekToSelectedTrack(selectedTrackIndex: Int) {
         playerController.seekToTrack(selectedTrackIndex)
         stateUpdater.start()
+    }
+
+    private fun List<TrackState>.toTrackUIStateList(): List<TrackUIState> {
+        return this.map {
+            TrackUIState(
+                trackId = it.trackId,
+                trackName = it.trackName,
+                trackUrl = it.trackUrl,
+                trackImage = it.trackImage,
+                isSelected = it.isSelected
+            )
+        }
     }
 
     private fun checkOutControllerState() {
@@ -142,38 +158,24 @@ class PlayerViewModel @Inject constructor(
         _sliderControlState.value = SliderControlState.AUTO
     }
 
-    override fun onPlayClick() {
+    fun onPlayClick() {
         playerController.play()
         stateUpdater.start()
     }
 
-    override fun onPauseClick() {
+    fun onPauseClick() {
         playerController.pause()
     }
 
-    /**
-     * Implementation of [MusicPlayerInterface.onPreviousClick].
-     * Switches to the previous track if one exists.
-     */
-    override fun onPreviousClick() {
+    fun onPreviousClick() {
         playerController.previous { index -> playlistManager.updateIndex(index) }
     }
 
-    /**
-     * Implementation of [MusicPlayerInterface.onNextClick].
-     * Switches to the next track in the list if one exists.
-     */
-    override fun onNextClick() {
+    fun onNextClick() {
         playerController.next { index -> playlistManager.updateIndex(index) }
     }
 
-    /**
-     * Implementation of [MusicPlayerInterface.onTrackClick].
-     * Selects the clicked track from the track list.
-     *
-     * @param track The track that was clicked.
-     */
-    override fun onTrackClick(track: TrackState) {
+    fun onTrackClick(track: TrackUIState) {
 
         when (_playerBarState.value.barVisibility) {
             PlayerBarVisibility.VISIBLE -> {
@@ -192,13 +194,7 @@ class PlayerViewModel @Inject constructor(
         playerController.play()
     }
 
-    /**
-     * Implementation of [MusicPlayerInterface.onSeekBarPositionChanged].
-     * Seeks to the specified position in the current track.
-     *
-     * @param position The position to seek to.
-     */
-    override fun onSeekBarPositionChanged(position: Long) {
+    fun onSeekBarPositionChanged(position: Long) {
         playerController.seekToPosition(position)
     }
 

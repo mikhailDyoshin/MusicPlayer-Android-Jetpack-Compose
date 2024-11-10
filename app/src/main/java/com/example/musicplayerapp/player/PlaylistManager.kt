@@ -8,7 +8,7 @@ import androidx.media3.common.MediaItem
 import com.example.musicplayerapp.domain.models.AudioUrisListModel
 import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.controller.PlayerController
-import com.example.musicplayerapp.presentation.playerscreen.state.TrackState
+import com.example.musicplayerapp.player.state.TrackState
 import javax.inject.Inject
 
 class PlaylistManager @Inject constructor(
@@ -69,11 +69,11 @@ class PlaylistManager @Inject constructor(
     }
 
     /**
-     * Converts a list of [TrackState] objects into a mutable list of [MediaItem] objects.
+     * Converts a list of [TrackState] objects into a list of [MediaItem] objects.
      *
-     * @return A mutable list of [MediaItem] objects.
+     * @return A list of [MediaItem] objects.
      */
-    private fun List<TrackState>.toMediaItemList(): MutableList<MediaItem> {
+    private fun List<TrackState>.toMediaItemList(): List<MediaItem> {
         return this.map { MediaItem.fromUri(it.trackUrl) }.toMutableList()
     }
 
