@@ -92,30 +92,48 @@ class PlaybackService : MediaSessionService() {
         return super.onStartCommand(intent, flags, startId)
     }
 
-    fun updateNotificationAccordingToPlayerState() {
+    private fun updateNotificationAccordingToPlayerState() {
         player.addListener(
             object : Player.Listener {
+
+                val playingTrackUri = player.currentMediaItem?.localConfiguration?.uri
+
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     super.onPlaybackStateChanged(playbackState)
                     when (playbackState) {
                         Player.STATE_READY -> {
                             if (player.playWhenReady) {
-                                playerNotificationManager.updateNotification(isPlaying = true)
+                                playerNotificationManager.updateNotification(
+                                    isPlaying = true,
+                                    trackUri = playingTrackUri
+                                )
                             } else {
-                                playerNotificationManager.updateNotification(isPlaying = false)
+                                playerNotificationManager.updateNotification(
+                                    isPlaying = false,
+                                    trackUri = playingTrackUri
+                                )
                             }
                         }
 
                         Player.STATE_IDLE -> {
-                            playerNotificationManager.updateNotification(isPlaying = false)
+                            playerNotificationManager.updateNotification(
+                                isPlaying = false,
+                                trackUri = playingTrackUri
+                            )
                         }
 
                         Player.STATE_ENDED -> {
-                            playerNotificationManager.updateNotification(isPlaying = false)
+                            playerNotificationManager.updateNotification(
+                                isPlaying = false,
+                                trackUri = playingTrackUri
+                            )
                         }
 
                         Player.STATE_BUFFERING -> {
-                            playerNotificationManager.updateNotification(isPlaying = player.playWhenReady)
+                            playerNotificationManager.updateNotification(
+                                isPlaying = player.playWhenReady,
+                                trackUri = playingTrackUri
+                            )
                         }
                     }
 
@@ -123,9 +141,15 @@ class PlaybackService : MediaSessionService() {
 
                 override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
                     if (playWhenReady) {
-                        playerNotificationManager.updateNotification(isPlaying = true)
+                        playerNotificationManager.updateNotification(
+                            isPlaying = true,
+                            trackUri = playingTrackUri
+                        )
                     } else {
-                        playerNotificationManager.updateNotification(isPlaying = false)
+                        playerNotificationManager.updateNotification(
+                            isPlaying = false,
+                            trackUri = playingTrackUri
+                        )
                     }
                 }
             }
@@ -182,7 +206,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     companion object {
-        private const val PLAYBACK_SERVICE_TAG = "My playback service"
+        private const val PLAYBACK_SERVICE_TAG = "MyPlaybackService"
     }
 
 }

@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateOf
@@ -75,7 +76,7 @@ class PlayerNotificationManager(
     }
 
 
-    fun updateNotification(isPlaying: Boolean) {
+    fun updateNotification(isPlaying: Boolean, trackUri: Uri?) {
 
 
         val playPausePendingIntent = when (isPlaying) {
@@ -113,6 +114,7 @@ class PlayerNotificationManager(
                 "Next",
                 actionIntentsMap[PlayerNotificationAction.ACTION_NEXT]
             ) // #2
+            .setContentTitle(getTrackNameFromUri(trackUri))
 
     }
 
@@ -151,6 +153,10 @@ class PlayerNotificationManager(
             Intent(context, PlaybackService::class.java).setAction(action.actionString),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+    }
+
+    private fun getTrackNameFromUri(trackUri: Uri?): String {
+        return trackUri?.lastPathSegment?.substringAfterLast('/') ?: "Null"
     }
 
     companion object {
