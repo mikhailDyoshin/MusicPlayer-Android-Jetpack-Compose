@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
-import com.example.musicplayerapp.data.storage.models.AudioStorageModel
+import com.example.musicplayerapp.data.storage.models.AudioItemStorageModel
 
 class AudioContentProvider(private val app: Context) {
 
@@ -20,7 +20,7 @@ class AudioContentProvider(private val app: Context) {
 
     private val sortOrder = null
 
-    fun getContent(uri: Uri): AudioStorageModel? {
+    fun getContent(uri: Uri): AudioItemStorageModel? {
 
         val fileName = app.contentResolver.query(
             uri,
@@ -39,13 +39,17 @@ class AudioContentProvider(private val app: Context) {
             Log.d("Audio names", "Query is null")
         }
         return fileName?.let { fullFileName ->
-            AudioStorageModel(
-                id = 1L,
+            val name = Uri.parse(fullFileName).lastPathSegment ?: "No name"
+            Log.d(TAG, "$name -> $fullFileName\n$uri\n")
+            AudioItemStorageModel(
                 name = Uri.parse(fullFileName).lastPathSegment ?: "No name",
-                artist = "",
                 uri = uri
             )
         }
+    }
+
+    companion object {
+        private const val TAG = "AudioContentProvider"
     }
 
 }

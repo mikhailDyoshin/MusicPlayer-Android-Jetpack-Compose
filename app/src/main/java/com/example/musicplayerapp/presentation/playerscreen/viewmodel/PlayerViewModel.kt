@@ -75,10 +75,8 @@ class PlayerViewModel @Inject constructor(
 
     private fun TrackState.toTrackUIState(): TrackUIState {
         return TrackUIState(
-            trackId = this.trackId,
             trackName = this.trackName,
             trackUrl = this.trackUrl,
-            trackImage = this.trackImage,
             isSelected = this.isSelected
         )
 
@@ -86,10 +84,8 @@ class PlayerViewModel @Inject constructor(
 
     private fun TrackUIState.toTrackState(): TrackState {
         return TrackState(
-            trackId = this.trackId,
             trackName = this.trackName,
             trackUrl = this.trackUrl,
-            trackImage = this.trackImage,
             isSelected = this.isSelected
         )
 

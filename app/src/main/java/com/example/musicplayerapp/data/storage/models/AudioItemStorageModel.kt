@@ -2,9 +2,7 @@ package com.example.musicplayerapp.data.storage.models
 
 import android.net.Uri
 
-data class AudioStorageModel(
-    val id: Long,
+data class AudioItemStorageModel(
     val name: String,
-    val artist: String,
     val uri: Uri
 )

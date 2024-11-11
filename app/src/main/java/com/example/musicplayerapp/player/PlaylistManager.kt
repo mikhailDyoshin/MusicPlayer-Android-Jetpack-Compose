@@ -57,12 +57,8 @@ class PlaylistManager @Inject constructor(
     private fun getTracksFromURIs(listOfURIs: List<Uri>): List<TrackState> {
         return getTracksUseCase.execute(AudioUrisListModel(listOfURIs)).map {
             TrackState(
-                trackId = it.trackId,
                 trackName = it.trackName,
                 trackUrl = it.trackUri,
-                trackImage = it.trackImage,
-                artistName = it.artistName,
-                isSelected = it.isSelected,
             )
         }
 
