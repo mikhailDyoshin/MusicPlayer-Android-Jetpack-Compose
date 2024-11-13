@@ -3,6 +3,7 @@ package com.example.musicplayerapp.player.service
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import androidx.annotation.OptIn
@@ -32,12 +33,21 @@ class PlaybackService : MediaSessionService() {
     private lateinit var notificationManager: NotificationManager
     private lateinit var playerNotificationManager: PlayerNotificationManager
 
+    private lateinit var audioManager: AudioManager
+
+    private lateinit var focusListener: FocusListener
+
     @RequiresApi(Build.VERSION_CODES.O)
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
 
         player = mediaSession.player
+
+        setUpAudioManager()
+
+        focusListener =
+            FocusListener(player = player, audioManager = audioManager)
 
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -50,6 +60,7 @@ class PlaybackService : MediaSessionService() {
         playerNotificationManager.setUpNotification()
 
         playerNotificationManager.setUpNotification()
+
 
         this.setMediaNotificationProvider(object : MediaNotification.Provider {
             @RequiresApi(Build.VERSION_CODES.O)
@@ -89,7 +100,17 @@ class PlaybackService : MediaSessionService() {
                 onPlay = { player.play() },
                 onNext = { seekToNext() })
         }
+        requestAudioFocus()
+        Log.d(PLAYBACK_SERVICE_TAG, "onStartCommand was called")
         return super.onStartCommand(intent, flags, startId)
+    }
+
+    private fun setUpAudioManager() {
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    }
+
+    private fun requestAudioFocus() {
+        focusListener.requestAudioFocus { stopSelf() }
     }
 
     private fun updateNotificationAccordingToPlayerState() {
@@ -171,6 +192,7 @@ class PlaybackService : MediaSessionService() {
             }
 
             playerNotificationManager.cancel()
+            Log.d(PLAYBACK_SERVICE_TAG, "Notifications was removed")
         }
 
         Log.d(PLAYBACK_SERVICE_TAG, "App was closed")

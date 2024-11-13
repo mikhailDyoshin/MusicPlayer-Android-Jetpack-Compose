@@ -124,7 +124,7 @@ class PlayerNotificationManager(
             NotificationChannel(
                 CHANNEL_ID,
                 "PlayerNotificationChannel",
-                NotificationManager.IMPORTANCE_NONE
+                NotificationManager.IMPORTANCE_LOW
             )
         )
     }
