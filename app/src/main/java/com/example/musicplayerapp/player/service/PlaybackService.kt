@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
@@ -24,7 +25,7 @@ import javax.inject.Inject
 @UnstableApi
 @RequiresApi(Build.VERSION_CODES.O)
 @AndroidEntryPoint
-class PlaybackService : MediaSessionService() {
+class PlaybackService : MediaSessionService(), Player.Listener {
 
     @Inject
     lateinit var mediaSession: MediaSession
@@ -43,11 +44,61 @@ class PlaybackService : MediaSessionService() {
         super.onCreate()
 
         player = mediaSession.player
+        player.addListener(
+            object : Player.Listener {
+
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    when (playbackState) {
+                        Player.STATE_IDLE -> {}
+
+                        Player.STATE_BUFFERING -> {}
+
+                        Player.STATE_READY -> {
+                            Log.d(
+                                PLAYBACK_SERVICE_PLAYER_TAG,
+                                "Playback state changed. Player is ready"
+                            )
+                            if (player.playWhenReady) {
+                                Log.d(
+                                    PLAYBACK_SERVICE_PLAYER_TAG,
+                                    "\tPlayback state changed. Player is playing"
+                                )
+                                requestAudioFocus()
+                            } else {
+                                Log.d(
+                                    PLAYBACK_SERVICE_PLAYER_TAG,
+                                    "\tPlayback state changed. Player is paused"
+                                )
+                            }
+                        }
+
+                        Player.STATE_ENDED -> {}
+                    }
+
+                }
+
+                override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                    if (player.playbackState == Player.STATE_READY) {
+                        Log.d(PLAYBACK_SERVICE_PLAYER_TAG, "Player is ready")
+                        if (playWhenReady) {
+                            Log.d(PLAYBACK_SERVICE_PLAYER_TAG, "\tPlayer is playing")
+                            requestAudioFocus()
+                        } else {
+                            Log.d(PLAYBACK_SERVICE_PLAYER_TAG, "\tPlayer is paused")
+                        }
+                    }
+                }
+
+                override fun onPlayerError(error: PlaybackException) {
+                    Log.e(PLAYBACK_SERVICE_PLAYER_TAG, "Playback failed: ${error.message}")
+                }
+            }
+        )
 
         setUpAudioManager()
 
         focusListener =
-            FocusListener(player = player, audioManager = audioManager)
+            FocusListener(player = player, audioManager = audioManager, mediaSessionService = this)
 
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -100,10 +151,11 @@ class PlaybackService : MediaSessionService() {
                 onPlay = { player.play() },
                 onNext = { seekToNext() })
         }
-        requestAudioFocus()
+
         Log.d(PLAYBACK_SERVICE_TAG, "onStartCommand was called")
         return super.onStartCommand(intent, flags, startId)
     }
+
 
     private fun setUpAudioManager() {
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -229,6 +281,6 @@ class PlaybackService : MediaSessionService() {
 
     companion object {
         private const val PLAYBACK_SERVICE_TAG = "MyPlaybackService"
+        private const val PLAYBACK_SERVICE_PLAYER_TAG = "MyPlaybackServicePlayer"
     }
-
 }

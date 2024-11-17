@@ -98,25 +98,25 @@ class PlayerViewModel @Inject constructor(
                 _playerBarState.value =
                     _playerBarState.value.copy(playerState = PlayerUIState.PLAYING)
                 emitPlaybackState()
-                Log.d(MEDIA_CONTROLLER_TAG, "Player is playing")
+//                Log.d(MEDIA_CONTROLLER_TAG, "Player is playing")
             },
             onPaused = {
                 _playerBarState.value =
                     _playerBarState.value.copy(playerState = PlayerUIState.PAUSED)
                 emitPlaybackState()
-                Log.d(MEDIA_CONTROLLER_TAG, "Player is paused")
+//                Log.d(MEDIA_CONTROLLER_TAG, "Player is paused")
             },
             onEnded = {
                 _playerBarState.value =
                     _playerBarState.value.copy(playerState = PlayerUIState.PAUSED)
                 playerController.pause()
-                Log.d(MEDIA_CONTROLLER_TAG, "Playlist is ended")
+//                Log.d(MEDIA_CONTROLLER_TAG, "Playlist is ended")
             },
             onBuffering = {
-                Log.d(MEDIA_CONTROLLER_TAG, "Player is buffering")
+//                Log.d(MEDIA_CONTROLLER_TAG, "Player is buffering")
             },
             onIdle = {
-                Log.d(MEDIA_CONTROLLER_TAG, "Player is idle")
+//                Log.d(MEDIA_CONTROLLER_TAG, "Player is idle")
             }
         )
     }
@@ -130,18 +130,18 @@ class PlayerViewModel @Inject constructor(
                 playlistManager.updateIndex(playerController.getCurrentTrackIndex())
             },
             onPlaylistChanged = {
-                Log.d(MEDIA_CONTROLLER_TAG, "Playlist changed")
+//                Log.d(MEDIA_CONTROLLER_TAG, "Playlist changed")
             },
             onIdle = {
-                Log.d(MEDIA_CONTROLLER_TAG, "Player idle")
+//                Log.d(MEDIA_CONTROLLER_TAG, "Player idle")
             },
             onTransitionReasonRepeat = {
-                Log.d(MEDIA_CONTROLLER_TAG, "Player repeat")
+//                Log.d(MEDIA_CONTROLLER_TAG, "Player repeat")
             },
             onError = {
                 _playerBarState.value =
                     _playerBarState.value.copy(playerState = PlayerUIState.ERROR)
-                Log.d(MEDIA_CONTROLLER_TAG, "Player error")
+//                Log.d(MEDIA_CONTROLLER_TAG, "Player error")
             }
         )
     }

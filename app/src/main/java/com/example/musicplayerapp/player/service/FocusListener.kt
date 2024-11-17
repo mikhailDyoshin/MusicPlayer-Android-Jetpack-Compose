@@ -4,31 +4,23 @@ import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Build
-import android.os.Handler
 import androidx.annotation.RequiresApi
 import androidx.media3.common.Player
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
-import java.util.concurrent.TimeUnit
+import androidx.media3.session.MediaSessionService
 
 @UnstableApi
 @RequiresApi(Build.VERSION_CODES.O)
-class FocusListener(private val player: Player, private val audioManager: AudioManager) {
+class FocusListener(private val player: Player, private val audioManager: AudioManager, private val mediaSessionService: MediaSessionService) {
 
-    private var delayedStopRunnable = Runnable {
-        player.stop()
-    }
-
-    private val handler = Handler()
     private val afChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS -> {
                 // Permanent loss of audio focus
                 // Pause playback immediately
                 player.pause()
-                // Wait 30 milliseconds before stopping playback
-                handler.postDelayed(delayedStopRunnable, TimeUnit.SECONDS.toMillis(30))
-
+                mediaSessionService.stopSelf()
                 Log.d(FOCUS_LISTENER_TAG, "Audio focus lost permanently, stopping player")
             }
 
@@ -42,7 +34,9 @@ class FocusListener(private val player: Player, private val audioManager: AudioM
             }
 
             AudioManager.AUDIOFOCUS_GAIN -> {
-                player.play()
+                if (!player.isPlaying) {
+                    player.play()
+                }
                 Log.d(FOCUS_LISTENER_TAG, "Audio focus gained")
             }
         }
@@ -50,12 +44,12 @@ class FocusListener(private val player: Player, private val audioManager: AudioM
 
     private val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).run {
         setAudioAttributes(AudioAttributes.Builder().run {
-            setUsage(AudioAttributes.USAGE_GAME)
+            setUsage(AudioAttributes.USAGE_MEDIA)
             setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             build()
         })
         setAcceptsDelayedFocusGain(true)
-        setOnAudioFocusChangeListener(afChangeListener, handler)
+        setOnAudioFocusChangeListener(afChangeListener)
         build()
     }
 
@@ -68,6 +62,11 @@ class FocusListener(private val player: Player, private val audioManager: AudioM
         val result = audioManager.requestAudioFocus(
             focusRequest
         )
+
+       if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+           Log.d(FOCUS_LISTENER_TAG, "Audio-focus request granted")
+           player.play()
+       }
 
         if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             // Handle failure to gain audio focus
