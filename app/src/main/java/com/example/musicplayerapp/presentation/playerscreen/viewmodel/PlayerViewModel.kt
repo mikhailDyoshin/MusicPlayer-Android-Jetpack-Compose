@@ -2,6 +2,7 @@ package com.example.musicplayerapp.presentation.playerscreen.viewmodel
 
 import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -37,16 +38,13 @@ class PlayerViewModel @Inject constructor(
      */
     val playlistState: Flow<List<TrackUIState>> = getFlowOfTracks()
 
-    /**
-     * It emits updated playback state to observers.
-     */
-//    private val _sliderProgressState = MutableStateFlow(SliderProgressState())
     val sliderProgressState: StateFlow<SliderProgressState> = getSliderProgressStateFlow()
 
     private val _playerBarState = MutableStateFlow(PlayerBarState())
     val playerBarState: StateFlow<PlayerBarState> get() = _playerBarState
 
     private val _sliderControlState = mutableStateOf(SliderControlState.AUTO)
+    val sliderControlState: State<SliderControlState> = _sliderControlState
 
     init {
         getPlayerState()
@@ -105,6 +103,10 @@ class PlayerViewModel @Inject constructor(
                     PlayerState.TRANSITION_REASON_REPEAT -> {
                         // Do nothing yet
                     }
+
+                    PlayerState.POSITION_CHANGED_BY_USER -> {
+                        setSliderToAutoState()
+                    }
                 }
             }.launchIn(viewModelScope)
 
@@ -128,7 +130,7 @@ class PlayerViewModel @Inject constructor(
         _sliderControlState.value = SliderControlState.MANUAL
     }
 
-    fun setSliderToAutoState() {
+    private fun setSliderToAutoState() {
         _sliderControlState.value = SliderControlState.AUTO
     }
 

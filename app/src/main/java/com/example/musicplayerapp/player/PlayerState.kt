@@ -39,4 +39,6 @@ enum class PlayerState {
     PLAYLIST_CHANGED,
 
     TRANSITION_REASON_REPEAT,
+
+    POSITION_CHANGED_BY_USER
 }

@@ -23,7 +23,7 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     private val stateUpdater = StateUpdater(
         callBack = {
             val position = if (player.currentPosition > 0L) player.currentPosition else 0L
-            _positionState.tryEmit(TrackPosition(position))
+            emitPositionState(TrackPosition(position))
         },
         updatePeriodMillis = UPDATE_POSITION_DELAY_MILLIS
     )
@@ -136,6 +136,58 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
         }
     }
 
+    override fun onPositionDiscontinuity(
+        oldPosition: Player.PositionInfo,
+        newPosition: Player.PositionInfo,
+        reason: Int
+    ) {
+        createPlayerStateLog("POSITION_DISCONTINUITY")
+        when (reason) {
+
+            Player.DISCONTINUITY_REASON_AUTO_TRANSITION -> {
+                createPlayerStateLog("DISCONTINUITY_REASON_AUTO_TRANSITION")
+            }
+
+            Player.DISCONTINUITY_REASON_INTERNAL -> {
+                createPlayerStateLog("DISCONTINUITY_REASON_INTERNAL")
+            }
+
+            Player.DISCONTINUITY_REASON_REMOVE -> {
+                createPlayerStateLog("DISCONTINUITY_REASON_REMOVE")
+            }
+
+            Player.DISCONTINUITY_REASON_SEEK -> {
+                createPlayerStateLog(
+                    "DISCONTINUITY_REASON_SEEK" +
+                            "\n\tPosition Flow -> ${_positionState.value.position}" +
+                            "\n\tOld Position -> ${oldPosition.positionMs}" +
+                            "\n\tNew Position -> ${newPosition.positionMs}"
+                )
+                /**
+                // We should emit here a new playback position to the [_positionState].
+                // It allows us to avoid thumb-jumping in a slider that displays playback-position.
+                // We need to avoid this cause it looks ugly on the screen.
+                 */
+                emitPositionState(TrackPosition(newPosition.positionMs))
+                emitPlayerState(PlayerState.POSITION_CHANGED_BY_USER)
+            }
+
+            Player.DISCONTINUITY_REASON_SEEK_ADJUSTMENT -> {
+                createPlayerStateLog("DISCONTINUITY_REASON_SEEK_ADJUSTMENT")
+
+            }
+
+            Player.DISCONTINUITY_REASON_SILENCE_SKIP -> {
+                createPlayerStateLog("DISCONTINUITY_REASON_SILENCE_SKIP")
+
+            }
+
+            Player.DISCONTINUITY_REASON_SKIP -> {
+                createPlayerStateLog("DISCONTINUITY_REASON_SKIP")
+            }
+        }
+    }
+
     private fun createPlayerStateLog(message: String) {
         Log.d(PLAYER_STATE_TAG, message)
     }
@@ -158,6 +210,10 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
 
     private fun emitPlayerState(state: PlayerState) {
         _playerState.tryEmit(state)
+    }
+
+    private fun emitPositionState(positionInMillis: TrackPosition) {
+        _positionState.tryEmit(positionInMillis)
     }
 
     companion object {

@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
+import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
 import com.example.musicplayerapp.ui.theme.ControlsBarBackground
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +18,7 @@ fun PlayerBottomBar(
     playbackState: StateFlow<SliderProgressState>,
     onSeekBarPositionChanging: () -> Unit,
     onSeekBarPositionChanged: (Long) -> Unit,
-
+    sliderControlState: SliderControlState,
     // Controls
     playerBarState: PlayerBarState,
     onPlay: () -> Unit,
@@ -32,7 +33,7 @@ fun PlayerBottomBar(
     Column(modifier = modifier.background(color = ControlsBarBackground)) {
         TrackProgressSlider(
             playbackState = playbackState,
-            sliderControlState = playerBarState.sliderControlState,
+            sliderControlState = sliderControlState,
             onSeekBarPositionChanging = { onSeekBarPositionChanging() },
             onSeekBarPositionChanged = { onSeekBarPositionChanged(it) }
         )
@@ -58,6 +59,7 @@ fun PlayerBottomBarPlayingPreview() {
 
     PlayerBottomBar(
         playbackState = flow,
+        sliderControlState = SliderControlState.AUTO,
         onSeekBarPositionChanging = { /*TODO*/ },
         onSeekBarPositionChanged = {},
         playerBarState = PlayerBarState(),
@@ -78,6 +80,7 @@ fun PlayerBottomBarOnPausePreview() {
 
     PlayerBottomBar(
         playbackState = flow,
+        sliderControlState = SliderControlState.AUTO,
         onSeekBarPositionChanging = { /*TODO*/ },
         onSeekBarPositionChanged = {},
         playerBarState = PlayerBarState(),

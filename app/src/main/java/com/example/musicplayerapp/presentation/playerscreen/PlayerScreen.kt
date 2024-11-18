@@ -20,6 +20,7 @@ import com.example.musicplayerapp.presentation.playerscreen.components.TrackList
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarVisibility
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerUIState
+import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackUIState
 import com.example.musicplayerapp.ui.theme.PurpleGrey80
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.StateFlow
 fun PlayerScreen(
     playlistState: List<TrackUIState>,
     playerBarState: PlayerBarState,
+    sliderControlState: SliderControlState,
     sliderProgressState: StateFlow<SliderProgressState>,
     onTrackClick: (track: TrackUIState) -> Unit,
     onSeekBarPositionChanged: (currentProgress: Long) -> Unit,
@@ -72,6 +74,7 @@ fun PlayerScreen(
 
             PlayerBarVisibility.VISIBLE -> {
                 PlayerBottomBar(
+                    sliderControlState = sliderControlState,
                     playbackState = sliderProgressState,
                     onSeekBarPositionChanging = { onSeekBarPositionChanging() },
                     onSeekBarPositionChanged = { onSeekBarPositionChanged(it) },
@@ -124,6 +127,7 @@ fun PlayerScreenPreview() {
     PlayerScreen(
         playlistState = trackList,
         playerBarState = PlayerBarState(),
+        sliderControlState = SliderControlState.AUTO,
         sliderProgressState = flow,
         onTrackClick = {},
         onSeekBarPositionChanged = {},
@@ -153,6 +157,7 @@ fun PlayerScreenPlayingPreview() {
             playerState = PlayerUIState.PLAYING,
             barVisibility = PlayerBarVisibility.VISIBLE
         ),
+        sliderControlState = SliderControlState.AUTO,
         sliderProgressState = flow,
         onTrackClick = {},
         onSeekBarPositionChanged = {},

@@ -44,10 +44,10 @@ class MainActivity : ComponentActivity() {
                     PlayerScreen(
                         playlistState = viewModel.playlistState.collectAsState(initial = emptyList()).value,
                         sliderProgressState = viewModel.sliderProgressState,
+                        sliderControlState = viewModel.sliderControlState.value,
                         playerBarState = viewModel.playerBarState.collectAsState(initial = PlayerBarState()).value,
                         onTrackClick = { viewModel.onTrackClick(it) },
                         onSeekBarPositionChanged = { currentProgress ->
-                            viewModel.setSliderToAutoState()
                             viewModel.onSeekBarPositionChanged(
                                 currentProgress
                             )
