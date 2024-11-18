@@ -3,13 +3,12 @@ package com.example.musicplayerapp.player.controller
 import android.content.ComponentName
 import android.content.Context
 import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.MusicPlayer
 import com.example.musicplayerapp.player.PlayerState
 import com.example.musicplayerapp.player.service.PlaybackService
+import com.example.musicplayerapp.player.state.TrackPosition
 import com.example.musicplayerapp.utils.modulo
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +20,8 @@ class PlayerController @Inject constructor(
 ) {
 
     val playerState: StateFlow<PlayerState> = player.playerState
+
+    val positionState: StateFlow<TrackPosition> = player.positionState
 
     private val sessionToken =
         SessionToken(context, ComponentName(context, PlaybackService::class.java))
@@ -35,53 +36,13 @@ class PlayerController @Inject constructor(
         }, MoreExecutors.directExecutor())
     }
 
-    fun controllerStateCallbacks(
-        onBuffering: () -> Unit,
-        onEnded: () -> Unit,
-        onIdle: () -> Unit,
-        onPaused: () -> Unit,
-        onPlaying: () -> Unit,
-    ) {
-        controllerFuture.addListener({
-            val controller = controllerFuture.get()
-
-            val controllerState = controller.playbackState
-
-            when (controllerState) {
-                Player.STATE_READY -> {
-                    if (controller.isPlaying) {
-                        onPlaying()
-                    } else {
-                        onPaused()
-                    }
-                }
-
-                Player.STATE_ENDED -> {
-                    onEnded()
-                }
-
-                Player.STATE_BUFFERING -> {
-                    onBuffering()
-                }
-
-                Player.STATE_IDLE -> {
-                    onIdle()
-                }
-            }
-
-        }, MoreExecutors.directExecutor())
-    }
-
-    fun getCurrentPosition(): Long {
-        return controllerFuture.get().currentPosition
-    }
-
     fun getCurrentTrackDuration(): Long {
-        return controllerFuture.get().duration
+        val duration = controllerFuture.get().duration
+        return if (duration > 0L) duration else 0L
     }
 
     fun getCurrentTrackIndex(): Int {
-        return controllerFuture.get().currentMediaItemIndex
+        return player.getCurrentTrackIndex()
     }
 
     fun next(onIndexUpdated: (nextIndex: Int) -> Unit) {
@@ -113,53 +74,6 @@ class PlayerController @Inject constructor(
             controllerFuture.get().prepare()
             controllerFuture.get().play()
         }, MoreExecutors.directExecutor())
-    }
-
-    fun playerStateCallbacks(
-        onNextTrackAuto: () -> Unit,
-        onTrackChangedByUser: () -> Unit,
-        onPlaylistChanged: () -> Unit,
-        onTransitionReasonRepeat: () -> Unit,
-        onIdle: () -> Unit,
-        onError: () -> Unit,
-    ) {
-
-        controllerFuture.addListener({
-            val playerState = player.playerState.value
-
-            when (playerState) {
-                PlayerState.STATE_NEXT_TRACK_AUTO -> {
-                    onNextTrackAuto()
-                }
-
-                PlayerState.STATE_TRACK_CHANGED_BY_USER -> {
-                    onTrackChangedByUser()
-                }
-
-                PlayerState.PLAYLIST_CHANGED -> {
-                    onPlaylistChanged()
-                }
-
-                PlayerState.TRANSITION_REASON_REPEAT -> {
-                    onTransitionReasonRepeat()
-                }
-
-                PlayerState.STATE_IDLE -> {
-                    onIdle()
-                }
-
-                PlayerState.STATE_ERROR -> {
-                    onError()
-                }
-
-                PlayerState.STATE_ENDED -> {
-                }
-                PlayerState.STATE_PLAYING -> {}
-                PlayerState.STATE_PAUSE -> {}
-            }
-
-        }, MoreExecutors.directExecutor())
-
     }
 
     fun previous(onIndexUpdated: (previousIndex: Int) -> Unit) {
@@ -199,7 +113,4 @@ class PlayerController @Inject constructor(
         }, MoreExecutors.directExecutor())
     }
 
-    companion object {
-        const val MEDIA_CONTROLLER_TAG = "PlayerControllerClass"
-    }
 }

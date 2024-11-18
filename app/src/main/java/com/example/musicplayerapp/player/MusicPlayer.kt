@@ -7,6 +7,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import androidx.media3.common.PlaybackException
+import com.example.musicplayerapp.player.state.TrackPosition
 import com.example.musicplayerapp.utils.StateUpdater
 import javax.inject.Inject
 
@@ -16,12 +17,13 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     private val _playerState = MutableStateFlow(PlayerState.STATE_IDLE)
     val playerState: StateFlow<PlayerState> get() = _playerState
 
-    private val _positionState = MutableStateFlow(0L)
-    val positionState: StateFlow<Long> get() = _positionState
+    private val _positionState = MutableStateFlow(TrackPosition(0L))
+    val positionState: StateFlow<TrackPosition> get() = _positionState
 
     private val stateUpdater = StateUpdater(
         callBack = {
-            _positionState.tryEmit(player.currentPosition)
+            val position = if (player.currentPosition > 0L) player.currentPosition else 0L
+            _positionState.tryEmit(TrackPosition(position))
         },
         updatePeriodMillis = UPDATE_POSITION_DELAY_MILLIS
     )
@@ -33,10 +35,16 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
     private fun initPlayer() {
         player.addListener(this)
         player.prepare()
+        trackPosition()
     }
 
     fun releasePlayer() {
         player.release()
+        releasePositionTracking()
+    }
+
+    fun getCurrentTrackIndex(): Int {
+        return player.currentMediaItemIndex
     }
 
     override fun onPlayerError(error: PlaybackException) {
@@ -52,12 +60,10 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
                 onTrue = {
                     createPlayerStateLog("\t-> STATE_PLAYING")
                     emitPlayerState(PlayerState.STATE_PLAYING)
-                    trackPosition()
                 },
                 onFalse = {
                     createPlayerStateLog("\t-> STATE_PAUSE")
                     emitPlayerState(PlayerState.STATE_PAUSE)
-                    releasePositionTracking()
                 }
             )
         }
@@ -67,18 +73,22 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
         super.onMediaItemTransition(mediaItem, reason)
         when (reason) {
             Player.MEDIA_ITEM_TRANSITION_REASON_AUTO -> {
+                createPlayerStateLog("-> STATE_NEXT_TRACK_AUTO")
                 emitPlayerState(PlayerState.STATE_NEXT_TRACK_AUTO)
             }
 
             Player.MEDIA_ITEM_TRANSITION_REASON_SEEK -> {
+                createPlayerStateLog("-> STATE_TRACK_CHANGED_BY_USER")
                 emitPlayerState(PlayerState.STATE_TRACK_CHANGED_BY_USER)
             }
 
             Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED -> {
+                createPlayerStateLog("-> PLAYLIST_CHANGED")
                 emitPlayerState(PlayerState.PLAYLIST_CHANGED)
             }
 
             Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT -> {
+                createPlayerStateLog("-> TRANSITION_REASON_REPEAT")
                 emitPlayerState(PlayerState.TRANSITION_REASON_REPEAT)
             }
         }
@@ -89,7 +99,6 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
             Player.STATE_IDLE -> {
                 createPlayerStateLog("-> STATE_IDLE")
                 emitPlayerState(PlayerState.STATE_PAUSE)
-                releasePositionTracking()
             }
 
             Player.STATE_BUFFERING -> {
@@ -112,12 +121,10 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
                     onTrue = {
                         createPlayerStateLog("\t-> STATE_PLAYING")
                         emitPlayerState(PlayerState.STATE_PLAYING)
-                        trackPosition()
                     },
                     onFalse = {
                         createPlayerStateLog("\t-> STATE_PAUSE")
                         emitPlayerState(PlayerState.STATE_PAUSE)
-                        releasePositionTracking()
                     }
                 )
             }
@@ -125,7 +132,6 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
             Player.STATE_ENDED -> {
                 createPlayerStateLog("-> STATE_ENDED")
                 emitPlayerState(PlayerState.STATE_ENDED)
-                releasePositionTracking()
             }
         }
     }
@@ -156,6 +162,6 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
 
     companion object {
         private const val PLAYER_STATE_TAG = "ExoPlayerListener"
-        private const val UPDATE_POSITION_DELAY_MILLIS = 1000L
+        private const val UPDATE_POSITION_DELAY_MILLIS = 20L
     }
 }

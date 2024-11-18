@@ -4,7 +4,8 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.example.musicplayerapp.config.UPDATE_DELAY
+import androidx.lifecycle.viewModelScope
+import com.example.musicplayerapp.player.PlayerState
 import com.example.musicplayerapp.player.controller.PlayerController
 import com.example.musicplayerapp.player.PlaylistManager
 import com.example.musicplayerapp.player.state.TrackState
@@ -14,12 +15,15 @@ import com.example.musicplayerapp.presentation.playerscreen.state.PlayerUIState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackUIState
-import com.example.musicplayerapp.utils.StateUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
@@ -36,26 +40,17 @@ class PlayerViewModel @Inject constructor(
     /**
      * It emits updated playback state to observers.
      */
-    private val _sliderProgressState = MutableStateFlow(SliderProgressState())
-    val sliderProgressState: StateFlow<SliderProgressState> get() = _sliderProgressState
+//    private val _sliderProgressState = MutableStateFlow(SliderProgressState())
+    val sliderProgressState: StateFlow<SliderProgressState> = getSliderProgressStateFlow()
 
-    private val _playerBarState = mutableStateOf(PlayerBarState())
-    val playerBarState = _playerBarState
-
+    private val _playerBarState = MutableStateFlow(PlayerBarState())
+    val playerBarState: StateFlow<PlayerBarState> get() = _playerBarState
 
     private val _sliderControlState = mutableStateOf(SliderControlState.AUTO)
 
-    /**
-     * The [stateUpdater] is used to start and stop updates (which happens after each frame)
-     * of the [playerController]'s state.
-     */
-    private val stateUpdater = StateUpdater(
-        callBack = {
-            checkOutControllerState()
-            checkoutPlayerState()
-        },
-        updatePeriodMillis = UPDATE_DELAY
-    )
+    init {
+        getPlayerState()
+    }
 
     /**
      * Loads tracks from content provider
@@ -70,7 +65,6 @@ class PlayerViewModel @Inject constructor(
 
     private fun seekToSelectedTrack(selectedTrackIndex: Int) {
         playerController.seekToTrack(selectedTrackIndex)
-        stateUpdater.start()
     }
 
     private fun TrackState.toTrackUIState(): TrackUIState {
@@ -91,70 +85,43 @@ class PlayerViewModel @Inject constructor(
 
     }
 
-    private fun checkOutControllerState() {
+    private fun getPlayerState() {
+            playerController.playerState.onEach { playerState ->
+                when(playerState) {
+                    PlayerState.STATE_IDLE -> updatePlayerState(PlayerUIState.PAUSED)
+                    PlayerState.STATE_ERROR -> updatePlayerState(PlayerUIState.ERROR)
+                    PlayerState.STATE_ENDED -> updatePlayerState(PlayerUIState.PAUSED)
+                    PlayerState.STATE_PLAYING -> updatePlayerState(PlayerUIState.PLAYING)
+                    PlayerState.STATE_PAUSE -> updatePlayerState(PlayerUIState.PAUSED)
+                    PlayerState.STATE_NEXT_TRACK_AUTO -> {
+                        playlistManager.updateIndex(playerController.getCurrentTrackIndex())
+                    }
+                    PlayerState.STATE_TRACK_CHANGED_BY_USER -> {
+                        playlistManager.updateIndex(playerController.getCurrentTrackIndex())
+                    }
+                    PlayerState.PLAYLIST_CHANGED -> {
+                        // Do nothing yet
+                    }
+                    PlayerState.TRANSITION_REASON_REPEAT -> {
+                        // Do nothing yet
+                    }
+                }
+            }.launchIn(viewModelScope)
 
-        playerController.controllerStateCallbacks(
-            onPlaying = {
-                _playerBarState.value =
-                    _playerBarState.value.copy(playerState = PlayerUIState.PLAYING)
-                emitPlaybackState()
-//                Log.d(MEDIA_CONTROLLER_TAG, "Player is playing")
-            },
-            onPaused = {
-                _playerBarState.value =
-                    _playerBarState.value.copy(playerState = PlayerUIState.PAUSED)
-                emitPlaybackState()
-//                Log.d(MEDIA_CONTROLLER_TAG, "Player is paused")
-            },
-            onEnded = {
-                _playerBarState.value =
-                    _playerBarState.value.copy(playerState = PlayerUIState.PAUSED)
-                playerController.pause()
-//                Log.d(MEDIA_CONTROLLER_TAG, "Playlist is ended")
-            },
-            onBuffering = {
-//                Log.d(MEDIA_CONTROLLER_TAG, "Player is buffering")
-            },
-            onIdle = {
-//                Log.d(MEDIA_CONTROLLER_TAG, "Player is idle")
-            }
-        )
     }
 
-    private fun checkoutPlayerState() {
-        playerController.playerStateCallbacks(
-            onNextTrackAuto = {
-                playlistManager.updateIndex(playerController.getCurrentTrackIndex())
-            },
-            onTrackChangedByUser = {
-                playlistManager.updateIndex(playerController.getCurrentTrackIndex())
-            },
-            onPlaylistChanged = {
-//                Log.d(MEDIA_CONTROLLER_TAG, "Playlist changed")
-            },
-            onIdle = {
-//                Log.d(MEDIA_CONTROLLER_TAG, "Player idle")
-            },
-            onTransitionReasonRepeat = {
-//                Log.d(MEDIA_CONTROLLER_TAG, "Player repeat")
-            },
-            onError = {
-                _playerBarState.value =
-                    _playerBarState.value.copy(playerState = PlayerUIState.ERROR)
-//                Log.d(MEDIA_CONTROLLER_TAG, "Player error")
-            }
-        )
-    }
-
-    private fun emitPlaybackState() {
-        _sliderProgressState.tryEmit(
-            value = SliderProgressState(
-                currentPlaybackPosition = playerController.getCurrentPosition(),
+    private fun getSliderProgressStateFlow(): StateFlow<SliderProgressState> {
+        return playerController.positionState.map {
+            SliderProgressState(
+                currentPlaybackPosition = it.position,
                 currentTrackDuration = playerController.getCurrentTrackDuration()
             )
-        )
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), SliderProgressState())
+    }
+
+    private fun updatePlayerState(playerState: PlayerUIState) {
         _playerBarState.value =
-            _playerBarState.value.copy(sliderControlState = _sliderControlState.value)
+            _playerBarState.value.copy(playerState = playerState)
     }
 
     fun setSliderToManualState() {
@@ -167,7 +134,6 @@ class PlayerViewModel @Inject constructor(
 
     fun onPlayClick() {
         playerController.play()
-        stateUpdater.start()
     }
 
     fun onPauseClick() {
@@ -210,7 +176,6 @@ class PlayerViewModel @Inject constructor(
      */
     override fun onCleared() {
         super.onCleared()
-        stateUpdater.stop()
 
         when (_playerBarState.value.playerState) {
             PlayerUIState.PLAYING -> {
@@ -230,7 +195,7 @@ class PlayerViewModel @Inject constructor(
     }
 
     companion object {
-        const val MEDIA_CONTROLLER_TAG = "PlayerViewModel_MediaController"
+//        const val MEDIA_CONTROLLER_TAG = "PlayerViewModel_MediaController"
         const val VM_TAG = "PlayerVM"
     }
 }
