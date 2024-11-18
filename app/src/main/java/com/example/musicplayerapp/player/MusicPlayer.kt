@@ -1,7 +1,6 @@
 package com.example.musicplayerapp.player
 
 import android.util.Log
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -13,50 +12,19 @@ import javax.inject.Inject
 
 class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Listener {
 
-    /**
-     * A state flow that emits the current playback state of the player.
-     */
+
     private val _playerState = MutableStateFlow(PlayerState.STATE_IDLE)
-
     val playerState: StateFlow<PlayerState> get() = _playerState
-
-    /**
-     * A state that stores the index of the current track
-     */
-    private val _currentTrackIndexState = mutableIntStateOf(0)
-
-    val currentTrackIndexState = _currentTrackIndexState
 
     private val _positionState = MutableStateFlow(0L)
     val positionState: StateFlow<Long> get() = _positionState
 
-    /**
-     * The current playback position in milliseconds. If the player's position
-     * is negative, this returns 0.
-     */
-    val currentPlaybackPosition: Long
-        get() = if (player.currentPosition > 0) player.currentPosition else 0L
-
     private val stateUpdater = StateUpdater(
         callBack = {
             _positionState.tryEmit(player.currentPosition)
-            Log.d(PLAYER_LISTENER_TAG, "Current position: ${player.currentPosition}")
         },
         updatePeriodMillis = UPDATE_POSITION_DELAY_MILLIS
     )
-
-    /**
-     * The duration of the current track in milliseconds. If the track's duration
-     * is negative, this returns 0.
-     */
-    val currentTrackDuration: Long
-        get() = if (player.duration > 0) player.duration else 0L
-
-    /**
-     * Initializes the player with a list of media items.
-     *
-     * @param trackList The list of media items to play.
-     */
 
     init {
         initPlayer()
@@ -64,128 +32,130 @@ class MusicPlayer @Inject constructor(private val player: ExoPlayer) : Player.Li
 
     private fun initPlayer() {
         player.addListener(this)
-//        player.setMediaItems(trackList)
         player.prepare()
     }
 
-    /**
-     * Sets up the player to start playback of the track at the specified index.
-     *
-     * @param index The index of the track in the playlist.
-     */
-    fun setUpTrack(index: Int) {
-        if (player.playbackState == Player.STATE_IDLE) player.prepare()
-        player.seekTo(index, 0)
-    }
-
-    fun playTrack() {
-        player.play()
-    }
-
-    fun pauseTrack() {
-        player.pause()
-    }
-
-    /**
-     * Releases the player, freeing any resources it holds.
-     */
     fun releasePlayer() {
         player.release()
     }
 
-    /**
-     * Seeks to the specified position in the current track.
-     *
-     * @param position The position to seek to, in milliseconds.
-     */
-    fun seekToPosition(position: Long) {
-        player.seekTo(position)
-    }
-
-    // Overrides for Player.Listener follow...
-
-    /**
-     * Called when a player error occurs. This implementation emits the
-     * STATE_ERROR state to the playerState flow.
-     */
     override fun onPlayerError(error: PlaybackException) {
         super.onPlayerError(error)
-        _playerState.tryEmit(PlayerState.STATE_ERROR)
+        createPlayerStateLog("-> STATE_ERROR")
+        emitPlayerState(PlayerState.STATE_ERROR)
     }
 
-    /**
-     * Called when the player's playWhenReady state changes. This implementation
-     * emits the STATE_PLAYING or STATE_PAUSE state to the playerState flow
-     * depending on the new playWhenReady state and the current playback state.
-     */
     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+        createPlayerStateLog("PLAY_WHEN_READY_CHANGED")
         if (player.playbackState == Player.STATE_READY) {
-            if (playWhenReady) {
-                stateUpdater.start()
-            } else {
-                stateUpdater.stop()
-            }
+            reactOnPlayWhenReady(
+                onTrue = {
+                    createPlayerStateLog("\t-> STATE_PLAYING")
+                    emitPlayerState(PlayerState.STATE_PLAYING)
+                    trackPosition()
+                },
+                onFalse = {
+                    createPlayerStateLog("\t-> STATE_PAUSE")
+                    emitPlayerState(PlayerState.STATE_PAUSE)
+                    releasePositionTracking()
+                }
+            )
         }
     }
 
-    /**
-     * Called when the player transitions to a new media item. This implementation
-     * emits the STATE_NEXT_TRACK and STATE_PLAYING states to the playerState flow
-     * if the transition was automatic.
-     */
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         super.onMediaItemTransition(mediaItem, reason)
         when (reason) {
             Player.MEDIA_ITEM_TRANSITION_REASON_AUTO -> {
-                _playerState.tryEmit(PlayerState.STATE_NEXT_TRACK_AUTO)
-
+                emitPlayerState(PlayerState.STATE_NEXT_TRACK_AUTO)
             }
 
             Player.MEDIA_ITEM_TRANSITION_REASON_SEEK -> {
-                _playerState.tryEmit(PlayerState.STATE_TRACK_CHANGED_BY_USER)
+                emitPlayerState(PlayerState.STATE_TRACK_CHANGED_BY_USER)
             }
 
             Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED -> {
-                _playerState.tryEmit(PlayerState.PLAYLIST_CHANGED)
+                emitPlayerState(PlayerState.PLAYLIST_CHANGED)
             }
 
             Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT -> {
-                _playerState.tryEmit(PlayerState.TRANSITION_REASON_REPEAT)
+                emitPlayerState(PlayerState.TRANSITION_REASON_REPEAT)
             }
         }
     }
 
-    /**
-     * Called when the player's playback state changes. This implementation emits
-     * a state to the playerState flow corresponding to the new playback state.
-     */
     override fun onPlaybackStateChanged(playbackState: Int) {
         when (playbackState) {
             Player.STATE_IDLE -> {
-                stateUpdater.stop()
+                createPlayerStateLog("-> STATE_IDLE")
+                emitPlayerState(PlayerState.STATE_PAUSE)
+                releasePositionTracking()
             }
 
             Player.STATE_BUFFERING -> {
-//                _playerState.tryEmit(PlayerState.STATE_BUFFERING)
+                createPlayerStateLog("STATE_BUFFERING")
+                reactOnPlayWhenReady(
+                    onTrue = {
+                        emitPlayerState(PlayerState.STATE_PLAYING)
+                        createPlayerStateLog("\t-> STATE_PLAYING")
+                    },
+                    onFalse = {
+                        emitPlayerState(PlayerState.STATE_PAUSE)
+                        createPlayerStateLog("\t-> STATE_PAUSE")
+                    }
+                )
             }
 
             Player.STATE_READY -> {
-//                _playerState.tryEmit(PlayerState.STATE_READY)
-                if (player.playWhenReady) {
-                    stateUpdater.start()
-                } else {
-                    stateUpdater.stop()
-                }
+                createPlayerStateLog("STATE_READY")
+                reactOnPlayWhenReady(
+                    onTrue = {
+                        createPlayerStateLog("\t-> STATE_PLAYING")
+                        emitPlayerState(PlayerState.STATE_PLAYING)
+                        trackPosition()
+                    },
+                    onFalse = {
+                        createPlayerStateLog("\t-> STATE_PAUSE")
+                        emitPlayerState(PlayerState.STATE_PAUSE)
+                        releasePositionTracking()
+                    }
+                )
             }
 
             Player.STATE_ENDED -> {
-                stateUpdater.stop()
+                createPlayerStateLog("-> STATE_ENDED")
+                emitPlayerState(PlayerState.STATE_ENDED)
+                releasePositionTracking()
             }
         }
     }
 
+    private fun createPlayerStateLog(message: String) {
+        Log.d(PLAYER_STATE_TAG, message)
+    }
+
+    private fun reactOnPlayWhenReady(onTrue: () -> Unit, onFalse: () -> Unit) {
+        if (player.playWhenReady) {
+            onTrue()
+        } else {
+            onFalse()
+        }
+    }
+
+    private fun trackPosition() {
+        stateUpdater.start()
+    }
+
+    private fun releasePositionTracking() {
+        stateUpdater.stop()
+    }
+
+    private fun emitPlayerState(state: PlayerState) {
+        _playerState.tryEmit(state)
+    }
+
     companion object {
-        private const val PLAYER_LISTENER_TAG = "ExoPlayerListener"
+        private const val PLAYER_STATE_TAG = "ExoPlayerListener"
         private const val UPDATE_POSITION_DELAY_MILLIS = 1000L
     }
 }

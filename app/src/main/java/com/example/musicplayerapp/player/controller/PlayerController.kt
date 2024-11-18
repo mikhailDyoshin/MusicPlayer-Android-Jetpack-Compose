@@ -12,12 +12,15 @@ import com.example.musicplayerapp.player.PlayerState
 import com.example.musicplayerapp.player.service.PlaybackService
 import com.example.musicplayerapp.utils.modulo
 import com.google.common.util.concurrent.MoreExecutors
+import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 class PlayerController @Inject constructor(
     context: Context,
     private val player: MusicPlayer
 ) {
+
+    val playerState: StateFlow<PlayerState> = player.playerState
 
     private val sessionToken =
         SessionToken(context, ComponentName(context, PlaybackService::class.java))
@@ -148,6 +151,11 @@ class PlayerController @Inject constructor(
                 PlayerState.STATE_ERROR -> {
                     onError()
                 }
+
+                PlayerState.STATE_ENDED -> {
+                }
+                PlayerState.STATE_PLAYING -> {}
+                PlayerState.STATE_PAUSE -> {}
             }
 
         }, MoreExecutors.directExecutor())
