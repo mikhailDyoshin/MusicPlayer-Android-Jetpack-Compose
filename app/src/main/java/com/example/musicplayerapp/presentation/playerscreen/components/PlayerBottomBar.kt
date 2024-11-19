@@ -2,7 +2,9 @@ package com.example.musicplayerapp.presentation.playerscreen.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
@@ -30,7 +32,12 @@ fun PlayerBottomBar(
     modifier: Modifier = Modifier
 
 ) {
-    Column(modifier = modifier.background(color = ControlsBarBackground)) {
+    Column(
+        modifier = modifier
+            .background(color = ControlsBarBackground)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         when (playerBarState.barVisibility) {
             PlayerBarVisibility.VISIBLE -> {
                 TrackProgressSlider(
@@ -48,6 +55,7 @@ fun PlayerBottomBar(
                     onPrev = { onPrev() }
                 )
             }
+
             PlayerBarVisibility.INVISIBLE -> {
                 // Display nothing
             }
@@ -67,13 +75,13 @@ fun PlayerBottomBarPlayingPreview() {
     PlayerBottomBar(
         playbackState = flow,
         sliderControlState = SliderControlState.AUTO,
-        onSeekBarPositionChanging = { /*TODO*/ },
+        onSeekBarPositionChanging = {},
         onSeekBarPositionChanged = {},
         playerBarState = PlayerBarState(),
-        onPlay = { /*TODO*/ },
-        onPause = { /*TODO*/ },
-        onNext = { /*TODO*/ },
-        onPrev = { /*TODO*/ })
+        onPlay = {},
+        onPause = {},
+        onNext = {},
+        onPrev = {})
 }
 
 @Preview
@@ -88,11 +96,11 @@ fun PlayerBottomBarOnPausePreview() {
     PlayerBottomBar(
         playbackState = flow,
         sliderControlState = SliderControlState.AUTO,
-        onSeekBarPositionChanging = { /*TODO*/ },
+        onSeekBarPositionChanging = {},
         onSeekBarPositionChanged = {},
         playerBarState = PlayerBarState(),
-        onPlay = { /*TODO*/ },
-        onPause = { /*TODO*/ },
-        onNext = { /*TODO*/ },
-        onPrev = { /*TODO*/ })
+        onPlay = {},
+        onPause = {},
+        onNext = {},
+        onPrev = {})
 }

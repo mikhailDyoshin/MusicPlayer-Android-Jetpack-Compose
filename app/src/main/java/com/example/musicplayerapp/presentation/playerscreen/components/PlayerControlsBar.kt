@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -29,50 +27,64 @@ fun PlayerControlsBar(
     modifier: Modifier = Modifier
 ) {
 
+    val playButtonDrawable = when (playerUIState) {
+        PlayerUIState.PLAYING -> R.drawable.pause_icon
+
+        PlayerUIState.PAUSED -> R.drawable.play_icon
+
+        PlayerUIState.ERROR -> R.drawable.play_icon
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(color = Color.Transparent)
             .padding(top = 5.dp, bottom = 20.dp),
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.SpaceEvenly
 
     ) {
         // Previous button
         IconButton(
-            onClick = {
-                onPrev()
-            },
-            modifier = Modifier.padding(end = 20.dp)
+            onClick = { onPrev() },
+            modifier = Modifier.size(50.dp)
         ) {
-            Icon(Icons.Default.KeyboardArrowLeft, null)
+            Icon(
+                painter = painterResource(id = R.drawable.arrow_left),
+                contentDescription = null,
+                tint = Color.Black
+            )
         }
 
         // Play/Pause button
-        IconButton(onClick = { when (playerUIState) {
-            PlayerUIState.PLAYING -> {
-                onPause()
-            }
-            PlayerUIState.PAUSED -> onPlay()
-            PlayerUIState.ERROR -> {
-                // Do nothing
-            }
-        } }) {
-
+        IconButton(onClick = {
             when (playerUIState) {
-                PlayerUIState.PLAYING -> Icon(painter = painterResource(R.drawable.pause_icon), null)
-                PlayerUIState.PAUSED -> Icon(painter = painterResource(R.drawable.play_icon), contentDescription = null)
-                PlayerUIState.ERROR -> Icon(painter = painterResource(R.drawable.play_icon), contentDescription = null)
+                PlayerUIState.PLAYING -> {
+                    onPause()
+                }
+
+                PlayerUIState.PAUSED -> onPlay()
+                PlayerUIState.ERROR -> {
+                    // Do nothing
+                }
             }
+        }, modifier = Modifier.size(50.dp)) {
+            Icon(
+                painter = painterResource(playButtonDrawable),
+                null,
+                tint = Color.Black
+            )
         }
 
         // Next button
         IconButton(
-            onClick = {
-                onNext()
-            },
-            modifier = Modifier.padding(start = 20.dp)
+            onClick = { onNext() },
+            modifier = Modifier.size(50.dp)
         ) {
-            Icon(Icons.Default.KeyboardArrowRight, null)
+            Icon(
+                painter = painterResource(id = R.drawable.arrow_right),
+                contentDescription = null,
+                tint = Color.Black
+            )
         }
     }
 
@@ -84,10 +96,10 @@ fun PlayerControlsBar(
 fun PlayerControlsBarOnPausePreview() {
     PlayerControlsBar(
         playerUIState = PlayerUIState.PAUSED,
-        onPlay = { /*TODO*/ },
-        onPause = { /*TODO*/ },
-        onNext = { /*TODO*/ },
-        onPrev = { /*TODO*/ },
+        onPlay = {},
+        onPause = {},
+        onNext = {},
+        onPrev = {},
         modifier = Modifier.background(color = Color.White)
     )
 }
@@ -97,10 +109,10 @@ fun PlayerControlsBarOnPausePreview() {
 fun PlayerControlsBarPlayingPreview() {
     PlayerControlsBar(
         playerUIState = PlayerUIState.PLAYING,
-        onPlay = { /*TODO*/ },
-        onPause = { /*TODO*/ },
-        onNext = { /*TODO*/ },
-        onPrev = { /*TODO*/ },
+        onPlay = {},
+        onPause = {},
+        onNext = {},
+        onPrev = {},
         modifier = Modifier.background(color = Color.White)
     )
 }
