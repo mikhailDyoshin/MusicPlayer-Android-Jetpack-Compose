@@ -10,12 +10,8 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,6 +20,7 @@ import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlS
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.util.Locale
 
 @Composable
 fun TrackProgressSlider(
@@ -40,8 +37,9 @@ fun TrackProgressSlider(
 
     val positionAuto = playbackStateValue.currentPlaybackPosition.toFloat()
 
-    var positionManual by rememberSaveable { mutableFloatStateOf(0f) }
-    var timeManual by remember { mutableStateOf("") }
+    val manualSliderProgressState = remember {
+        mutableStateOf(ManualSliderProgressState())
+    }
 
     Column(
         modifier = modifier,
@@ -50,15 +48,15 @@ fun TrackProgressSlider(
         Slider(
             value = when (sliderControlState) {
                 SliderControlState.AUTO -> positionAuto
-                SliderControlState.MANUAL -> positionManual
+                SliderControlState.MANUAL -> manualSliderProgressState.value.position
             },
             onValueChange = {
                 onSeekBarPositionChanging()
-                positionManual = it
-                timeManual = it.toLong().formatTime()
+                manualSliderProgressState.value =
+                    ManualSliderProgressState(position = it, time = it.toLong().formatTime())
             },
             onValueChangeFinished = {
-                onSeekBarPositionChanged(positionManual.toLong())
+                onSeekBarPositionChanged(manualSliderProgressState.value.position.toLong())
             },
             valueRange = 0f..playbackStateValue.currentTrackDuration.toFloat(),
             modifier = Modifier
@@ -74,7 +72,7 @@ fun TrackProgressSlider(
             Text(
                 text = when (sliderControlState) {
                     SliderControlState.AUTO -> playbackStateValue.currentPlaybackPosition.formatTime()
-                    SliderControlState.MANUAL -> timeManual
+                    SliderControlState.MANUAL -> manualSliderProgressState.value.time
                 },
             )
             Text(
@@ -95,8 +93,10 @@ private fun Long.formatTime(): String {
     val totalSeconds = this / 1000
     val minutes = totalSeconds / 60
     val remainingSeconds = totalSeconds % 60
-    return String.format("%02d:%02d", minutes, remainingSeconds)
+    return String.format(Locale.US, "%02d:%02d", minutes, remainingSeconds)
 }
+
+data class ManualSliderProgressState(val position: Float = 0f, val time: String = 0L.formatTime())
 
 @Preview
 @Composable
