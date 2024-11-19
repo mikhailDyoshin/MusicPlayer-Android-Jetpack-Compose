@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
                         onPause = { viewModel.onPauseClick() },
                         onNext = { viewModel.onNextClick() },
                         onPrev = { viewModel.onPreviousClick() },
-                        launchActivity = { selectAudioLauncher.launch(it) }
+                        launchActivity = { selectAudioLauncher.launch(it.string) }
                     )
                 }
             }

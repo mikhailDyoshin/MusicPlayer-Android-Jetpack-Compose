@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
+import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarVisibility
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
 import com.example.musicplayerapp.ui.theme.ControlsBarBackground
@@ -29,23 +30,29 @@ fun PlayerBottomBar(
     modifier: Modifier = Modifier
 
 ) {
-
     Column(modifier = modifier.background(color = ControlsBarBackground)) {
-        TrackProgressSlider(
-            playbackState = playbackState,
-            sliderControlState = sliderControlState,
-            onSeekBarPositionChanging = { onSeekBarPositionChanging() },
-            onSeekBarPositionChanged = { onSeekBarPositionChanged(it) }
-        )
+        when (playerBarState.barVisibility) {
+            PlayerBarVisibility.VISIBLE -> {
+                TrackProgressSlider(
+                    playbackState = playbackState,
+                    sliderControlState = sliderControlState,
+                    onSeekBarPositionChanging = { onSeekBarPositionChanging() },
+                    onSeekBarPositionChanged = { onSeekBarPositionChanged(it) }
+                )
 
-        PlayerControlsBar(
-            playerUIState = playerBarState.playerState,
-            onPlay = { onPlay() },
-            onPause = { onPause() },
-            onNext = { onNext() },
-            onPrev = { onPrev() })
+                PlayerControlsBar(
+                    playerUIState = playerBarState.playerState,
+                    onPlay = { onPlay() },
+                    onPause = { onPause() },
+                    onNext = { onNext() },
+                    onPrev = { onPrev() }
+                )
+            }
+            PlayerBarVisibility.INVISIBLE -> {
+                // Display nothing
+            }
+        }
     }
-
 }
 
 @Preview

@@ -1,22 +1,20 @@
 package com.example.musicplayerapp.presentation.playerscreen
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
+import com.example.musicplayerapp.presentation.playerscreen.components.AddButton
 import com.example.musicplayerapp.presentation.playerscreen.components.PlayerBottomBar
 import com.example.musicplayerapp.presentation.playerscreen.components.TrackList
+import com.example.musicplayerapp.presentation.playerscreen.previewData.PlayerScreenPreviewData
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarVisibility
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerUIState
@@ -24,7 +22,6 @@ import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlS
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackUIState
 import com.example.musicplayerapp.ui.theme.PurpleGrey80
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
@@ -40,12 +37,8 @@ fun PlayerScreen(
     onPause: () -> Unit,
     onNext: () -> Unit,
     onPrev: () -> Unit,
-    launchActivity: (input: String) -> Unit,
+    launchActivity: (launcherType: LauncherTypeForActivityResult) -> Unit,
 ) {
-
-    LaunchedEffect(playerBarState) {
-        Log.d("PlayerBarState", playerBarState.playerState.name)
-    }
 
     Box(
         modifier = Modifier
@@ -55,80 +48,49 @@ fun PlayerScreen(
         TrackList(tracks = playlistState, onTrackClick = {
             onTrackClick(it)
         })
-        FloatingActionButton(
-            onClick = { launchActivity("audio/*") },
-            modifier = Modifier
-                .wrapContentSize()
-                .zIndex(2f)
-                .align(Alignment.BottomEnd)
-                .padding(
-                    end = 20.dp, bottom = when (playerBarState.barVisibility) {
-                        PlayerBarVisibility.VISIBLE -> 170.dp
-                        PlayerBarVisibility.INVISIBLE -> 20.dp
-                    }
-                )
-        ) {
-            Text("+")
-        }
-        when (playerBarState.barVisibility) {
-
-            PlayerBarVisibility.VISIBLE -> {
-                PlayerBottomBar(
-                    sliderControlState = sliderControlState,
-                    playbackState = sliderProgressState,
-                    onSeekBarPositionChanging = { onSeekBarPositionChanging() },
-                    onSeekBarPositionChanged = { onSeekBarPositionChanged(it) },
-                    playerBarState = playerBarState,
-                    onPlay = { onPlay() },
-                    onPause = { onPause() },
-                    onNext = { onNext() },
-                    onPrev = { onPrev() },
-                    modifier = Modifier.align(Alignment.BottomCenter)
+        Column(Modifier.align(Alignment.BottomCenter)) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+            ) {
+                AddButton(
+                    onClick = { launchActivity(LauncherTypeForActivityResult.AUDIO) },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(end = 20.dp, bottom = 20.dp)
                 )
             }
 
-            PlayerBarVisibility.INVISIBLE -> {
-                // Display nothing
-            }
+            PlayerBottomBar(
+                sliderControlState = sliderControlState,
+                playbackState = sliderProgressState,
+                onSeekBarPositionChanging = { onSeekBarPositionChanging() },
+                onSeekBarPositionChanged = { onSeekBarPositionChanged(it) },
+                playerBarState = playerBarState,
+                onPlay = { onPlay() },
+                onPause = { onPause() },
+                onNext = { onNext() },
+                onPrev = { onPrev() },
+            )
         }
     }
+
+
 }
 
-val trackList = listOf(
-    TrackUIState(trackName = "Track 1", artistName = "Android", isSelected = false),
-    TrackUIState(trackName = "Track 2", artistName = "Android", isSelected = false),
-    TrackUIState(trackName = "Track 3", artistName = "Android", isSelected = true),
-    TrackUIState(trackName = "Track 4", artistName = "Android", isSelected = false),
-    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
-    TrackUIState(trackName = "Track 5", artistName = "Android", isSelected = false),
-
-    )
+enum class LauncherTypeForActivityResult(val string: String) {
+    AUDIO(string = "audio/*")
+}
 
 @Preview(showSystemUi = true)
 @Composable
 fun PlayerScreenPreview() {
 
-
-
-    val currentPosition = 50000L
-    val trackDuration = 500000L
-
-    val mutableFlow =
-        MutableStateFlow(SliderProgressState(currentPosition, trackDuration))
-    val flow: StateFlow<SliderProgressState> = mutableFlow
-
     PlayerScreen(
-        playlistState = trackList,
+        playlistState = PlayerScreenPreviewData.listOfTracks,
         playerBarState = PlayerBarState(),
         sliderControlState = SliderControlState.AUTO,
-        sliderProgressState = flow,
+        sliderProgressState = PlayerScreenPreviewData.sliderProgressStateFlow,
         onTrackClick = {},
         onSeekBarPositionChanged = {},
         onSeekBarPositionChanging = {},
@@ -144,21 +106,14 @@ fun PlayerScreenPreview() {
 @Composable
 fun PlayerScreenPlayingPreview() {
 
-    val currentPosition = 50000L
-    val trackDuration = 500000L
-
-    val mutableFlow =
-        MutableStateFlow(SliderProgressState(currentPosition, trackDuration))
-    val flow: StateFlow<SliderProgressState> = mutableFlow
-
     PlayerScreen(
-        playlistState = trackList,
+        playlistState = PlayerScreenPreviewData.listOfTracks,
         playerBarState = PlayerBarState(
             playerState = PlayerUIState.PLAYING,
             barVisibility = PlayerBarVisibility.VISIBLE
         ),
         sliderControlState = SliderControlState.AUTO,
-        sliderProgressState = flow,
+        sliderProgressState = PlayerScreenPreviewData.sliderProgressStateFlow,
         onTrackClick = {},
         onSeekBarPositionChanged = {},
         onSeekBarPositionChanging = {},
