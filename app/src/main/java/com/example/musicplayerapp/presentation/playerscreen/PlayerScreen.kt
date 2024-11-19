@@ -40,42 +40,35 @@ fun PlayerScreen(
     launchActivity: (launcherType: LauncherTypeForActivityResult) -> Unit,
 ) {
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(color = PurpleGrey80)
     ) {
-        TrackList(tracks = playlistState, onTrackClick = {
-            onTrackClick(it)
-        })
-        Column(Modifier.align(Alignment.BottomCenter)) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-            ) {
-                AddButton(
-                    onClick = { launchActivity(LauncherTypeForActivityResult.AUDIO) },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(end = 20.dp, bottom = 20.dp)
-                )
-            }
-
-            PlayerBottomBar(
-                sliderControlState = sliderControlState,
-                playbackState = sliderProgressState,
-                onSeekBarPositionChanging = { onSeekBarPositionChanging() },
-                onSeekBarPositionChanged = { onSeekBarPositionChanged(it) },
-                playerBarState = playerBarState,
-                onPlay = { onPlay() },
-                onPause = { onPause() },
-                onNext = { onNext() },
-                onPrev = { onPrev() },
+        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            TrackList(tracks = playlistState, onTrackClick = {
+                onTrackClick(it)
+            })
+            AddButton(
+                onClick = { launchActivity(LauncherTypeForActivityResult.AUDIO) },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp, bottom = 20.dp)
             )
         }
+
+        PlayerBottomBar(
+            sliderControlState = sliderControlState,
+            playbackState = sliderProgressState,
+            onSeekBarPositionChanging = { onSeekBarPositionChanging() },
+            onSeekBarPositionChanged = { onSeekBarPositionChanged(it) },
+            playerBarState = playerBarState,
+            onPlay = { onPlay() },
+            onPause = { onPause() },
+            onNext = { onNext() },
+            onPrev = { onPrev() },
+        )
     }
-
-
 }
 
 enum class LauncherTypeForActivityResult(val string: String) {
