@@ -5,5 +5,6 @@ data class TrackState(
     val serialNumber: Int = 1,
     val trackName: String = "",
     val trackUrl: String = "",
-    var isSelected: Boolean = false,
+    val isSelected: Boolean = false,
+    val duration: Long = 0L,
 )

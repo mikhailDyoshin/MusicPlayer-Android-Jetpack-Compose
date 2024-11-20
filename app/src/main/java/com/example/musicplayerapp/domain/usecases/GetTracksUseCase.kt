@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 class GetTracksUseCase @Inject constructor(private val repository: MusicPlayerRepository) {
 
-    fun execute(urisList: AudioUrisListModel): List<TrackModel> {
+    operator fun invoke(urisList: AudioUrisListModel): List<TrackModel> {
         return repository.getTrackList(urisList)
     }
 

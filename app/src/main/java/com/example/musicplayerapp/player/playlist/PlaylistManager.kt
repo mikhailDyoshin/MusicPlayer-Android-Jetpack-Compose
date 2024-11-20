@@ -1,8 +1,10 @@
 package com.example.musicplayerapp.player.playlist
 
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import com.example.musicplayerapp.domain.models.AudioUrisListModel
+import com.example.musicplayerapp.domain.usecases.GetAudioDurationFromSAFUseCase
 import com.example.musicplayerapp.domain.usecases.GetTracksUseCase
 import com.example.musicplayerapp.player.controller.PlayerController
 import com.example.musicplayerapp.player.state.TrackState
@@ -11,6 +13,7 @@ import javax.inject.Inject
 
 class PlaylistManager @Inject constructor(
     private val getTracksUseCase: GetTracksUseCase,
+    private val getAudioDurationFromSAFUseCase: GetAudioDurationFromSAFUseCase,
     private val playerController: PlayerController
 ) {
     private val playlist = Playlist()
@@ -43,10 +46,11 @@ class PlaylistManager @Inject constructor(
     }
 
     private fun getTracksFromURIs(listOfURIs: List<Uri>): List<TrackState> {
-        return getTracksUseCase.execute(AudioUrisListModel(listOfURIs)).map {
+        return getTracksUseCase(AudioUrisListModel(listOfURIs)).map {
             TrackState(
                 trackName = it.trackName,
                 trackUrl = it.trackUri,
+                duration = getAudioDurationFromSAFUseCase(it.trackUri.toUri())
             )
         }
 
