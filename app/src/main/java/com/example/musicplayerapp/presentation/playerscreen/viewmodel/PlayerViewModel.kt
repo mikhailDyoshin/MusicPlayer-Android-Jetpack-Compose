@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicplayerapp.player.PlayerState
 import com.example.musicplayerapp.player.controller.PlayerController
-import com.example.musicplayerapp.player.PlaylistManager
+import com.example.musicplayerapp.player.playlist.PlaylistManager
 import com.example.musicplayerapp.player.state.TrackState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarState
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarVisibility
@@ -17,7 +17,6 @@ import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlS
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackUIState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +35,7 @@ class PlayerViewModel @Inject constructor(
     /**
      * State that stores a list of all tracks.
      */
-    val playlistState: Flow<List<TrackUIState>> = getFlowOfTracks()
+    val playlistState: StateFlow<List<TrackUIState>> = getFlowOfTracks()
 
     val sliderProgressState: StateFlow<SliderProgressState> = getSliderProgressStateFlow()
 
@@ -57,8 +56,9 @@ class PlayerViewModel @Inject constructor(
         playlistManager.addTracks(urisList)
     }
 
-    private fun getFlowOfTracks(): Flow<List<TrackUIState>> {
-        return playlistManager.tracksState.map { list -> list.map { track -> track.toTrackUIState() } }
+    private fun getFlowOfTracks(): StateFlow<List<TrackUIState>> {
+        return playlistManager.playlistState.map { list -> list.map { track -> track.toTrackUIState() } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
     }
 
     private fun seekToSelectedTrack(selectedTrackIndex: Int) {
@@ -67,6 +67,8 @@ class PlayerViewModel @Inject constructor(
 
     private fun TrackState.toTrackUIState(): TrackUIState {
         return TrackUIState(
+            index = this.index,
+            serialNumber = this.serialNumber,
             trackName = this.trackName,
             trackUrl = this.trackUrl,
             isSelected = this.isSelected
@@ -76,6 +78,8 @@ class PlayerViewModel @Inject constructor(
 
     private fun TrackUIState.toTrackState(): TrackState {
         return TrackState(
+            index = this.index,
+            serialNumber = this.serialNumber,
             trackName = this.trackName,
             trackUrl = this.trackUrl,
             isSelected = this.isSelected
@@ -84,31 +88,34 @@ class PlayerViewModel @Inject constructor(
     }
 
     private fun getPlayerState() {
-            playerController.playerState.onEach { playerState ->
-                when(playerState) {
-                    PlayerState.STATE_IDLE -> updatePlayerState(PlayerUIState.PAUSED)
-                    PlayerState.STATE_ERROR -> updatePlayerState(PlayerUIState.ERROR)
-                    PlayerState.STATE_ENDED -> updatePlayerState(PlayerUIState.PAUSED)
-                    PlayerState.STATE_PLAYING -> updatePlayerState(PlayerUIState.PLAYING)
-                    PlayerState.STATE_PAUSE -> updatePlayerState(PlayerUIState.PAUSED)
-                    PlayerState.STATE_NEXT_TRACK_AUTO -> {
-                        playlistManager.updateIndex(playerController.getCurrentTrackIndex())
-                    }
-                    PlayerState.STATE_TRACK_CHANGED_BY_USER -> {
-                        playlistManager.updateIndex(playerController.getCurrentTrackIndex())
-                    }
-                    PlayerState.PLAYLIST_CHANGED -> {
-                        // Do nothing yet
-                    }
-                    PlayerState.TRANSITION_REASON_REPEAT -> {
-                        // Do nothing yet
-                    }
-
-                    PlayerState.POSITION_CHANGED_BY_USER -> {
-                        setSliderToAutoState()
-                    }
+        playerController.playerState.onEach { playerState ->
+            when (playerState) {
+                PlayerState.STATE_IDLE -> updatePlayerState(PlayerUIState.PAUSED)
+                PlayerState.STATE_ERROR -> updatePlayerState(PlayerUIState.ERROR)
+                PlayerState.STATE_ENDED -> updatePlayerState(PlayerUIState.PAUSED)
+                PlayerState.STATE_PLAYING -> updatePlayerState(PlayerUIState.PLAYING)
+                PlayerState.STATE_PAUSE -> updatePlayerState(PlayerUIState.PAUSED)
+                PlayerState.STATE_NEXT_TRACK_AUTO -> {
+                    playlistManager.selectByIndex(playerController.getCurrentTrackIndex())
                 }
-            }.launchIn(viewModelScope)
+
+                PlayerState.STATE_TRACK_CHANGED_BY_USER -> {
+                    playlistManager.selectByIndex(playerController.getCurrentTrackIndex())
+                }
+
+                PlayerState.PLAYLIST_CHANGED -> {
+                    // Do nothing yet
+                }
+
+                PlayerState.TRANSITION_REASON_REPEAT -> {
+                    // Do nothing yet
+                }
+
+                PlayerState.POSITION_CHANGED_BY_USER -> {
+                    setSliderToAutoState()
+                }
+            }
+        }.launchIn(viewModelScope)
 
     }
 
@@ -143,11 +150,11 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun onPreviousClick() {
-        playerController.previous { index -> playlistManager.updateIndex(index) }
+        playerController.previous { index -> playlistManager.selectByIndex(index) }
     }
 
     fun onNextClick() {
-        playerController.next { index -> playlistManager.updateIndex(index) }
+        playerController.next { index -> playlistManager.selectByIndex(index) }
     }
 
     fun onTrackClick(track: TrackUIState) {
@@ -163,9 +170,11 @@ class PlayerViewModel @Inject constructor(
             }
         }
 
-        val selectedTrackIndex = playlistManager.setActiveTrack(track.toTrackState())
-        seekToSelectedTrack(selectedTrackIndex)
-        playerController.play()
+        val selectedTrackIndex = playlistManager.selectByTrack(track.toTrackState())
+        if (selectedTrackIndex != null) {
+            seekToSelectedTrack(selectedTrackIndex)
+            playerController.play()
+        }
     }
 
     fun onSeekBarPositionChanged(position: Long) {
@@ -197,7 +206,7 @@ class PlayerViewModel @Inject constructor(
     }
 
     companion object {
-//        const val MEDIA_CONTROLLER_TAG = "PlayerViewModel_MediaController"
+        //        const val MEDIA_CONTROLLER_TAG = "PlayerViewModel_MediaController"
         const val VM_TAG = "PlayerVM"
     }
 }
