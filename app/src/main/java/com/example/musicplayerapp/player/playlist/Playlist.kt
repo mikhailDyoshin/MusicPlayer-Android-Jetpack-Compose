@@ -26,7 +26,7 @@ class Playlist {
         updatePlaylist()
     }
 
-    fun selectByTrack(track: TrackState): Int? {
+    private fun selectByTrack(track: TrackState): Int? {
         resetPreviouslySelectedTrack()
         val newCurrentTrack = track.copy(isSelected = true)
         trackMap.entries.find { it.value == track }?.key.let { key ->

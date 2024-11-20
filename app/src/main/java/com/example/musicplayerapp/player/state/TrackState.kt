@@ -6,5 +6,5 @@ data class TrackState(
     val trackName: String = "",
     val trackUrl: String = "",
     val isSelected: Boolean = false,
-    val duration: Long = 0L,
+    val durationInMillis: Long = 0L,
 )

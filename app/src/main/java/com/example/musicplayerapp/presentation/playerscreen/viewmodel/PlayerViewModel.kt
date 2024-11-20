@@ -15,6 +15,7 @@ import com.example.musicplayerapp.presentation.playerscreen.state.PlayerBarVisib
 import com.example.musicplayerapp.presentation.playerscreen.state.PlayerUIState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
+import com.example.musicplayerapp.presentation.playerscreen.state.TrackDuration
 import com.example.musicplayerapp.presentation.playerscreen.state.TrackUIState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,7 +72,8 @@ class PlayerViewModel @Inject constructor(
             serialNumber = this.serialNumber,
             trackName = this.trackName,
             trackUrl = this.trackUrl,
-            isSelected = this.isSelected
+            isSelected = this.isSelected,
+            duration = TrackDuration(milliseconds = this.durationInMillis)
         )
 
     }
@@ -169,12 +171,9 @@ class PlayerViewModel @Inject constructor(
                     _playerBarState.value.copy(barVisibility = PlayerBarVisibility.VISIBLE)
             }
         }
-
-        val selectedTrackIndex = playlistManager.selectByTrack(track.toTrackState())
-        if (selectedTrackIndex != null) {
-            seekToSelectedTrack(selectedTrackIndex)
-            playerController.play()
-        }
+        playlistManager.selectByIndex(track.index)
+        seekToSelectedTrack(track.index)
+        playerController.play()
     }
 
     fun onSeekBarPositionChanged(position: Long) {

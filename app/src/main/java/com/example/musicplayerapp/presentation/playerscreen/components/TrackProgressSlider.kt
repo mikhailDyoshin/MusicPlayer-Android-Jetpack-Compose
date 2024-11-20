@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderControlState
 import com.example.musicplayerapp.presentation.playerscreen.state.SliderProgressState
+import com.example.musicplayerapp.utils.millisToMinutesSeconds
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.Locale
@@ -53,7 +54,10 @@ fun TrackProgressSlider(
             onValueChange = {
                 onSeekBarPositionChanging()
                 manualSliderProgressState.value =
-                    ManualSliderProgressState(position = it, time = it.toLong().formatTime())
+                    ManualSliderProgressState(
+                        position = it,
+                        time = it.toLong().millisToMinutesSeconds()
+                    )
             },
             onValueChangeFinished = {
                 onSeekBarPositionChanged(manualSliderProgressState.value.position.toLong())
@@ -71,12 +75,12 @@ fun TrackProgressSlider(
         ) {
             Text(
                 text = when (sliderControlState) {
-                    SliderControlState.AUTO -> playbackStateValue.currentPlaybackPosition.formatTime()
+                    SliderControlState.AUTO -> playbackStateValue.currentPlaybackPosition.millisToMinutesSeconds()
                     SliderControlState.MANUAL -> manualSliderProgressState.value.time
                 },
             )
             Text(
-                text = playbackStateValue.currentTrackDuration.formatTime(),
+                text = playbackStateValue.currentTrackDuration.millisToMinutesSeconds(),
             )
         }
     }
@@ -84,19 +88,11 @@ fun TrackProgressSlider(
 
 }
 
-/**
- * Formats a long duration value (in milliseconds) into a time string in the format "MM:SS".
- *
- * @return The formatted time string.
- */
-private fun Long.formatTime(): String {
-    val totalSeconds = this / 1000
-    val minutes = totalSeconds / 60
-    val remainingSeconds = totalSeconds % 60
-    return String.format(Locale.US, "%02d:%02d", minutes, remainingSeconds)
-}
 
-data class ManualSliderProgressState(val position: Float = 0f, val time: String = 0L.formatTime())
+data class ManualSliderProgressState(
+    val position: Float = 0f,
+    val time: String = 0L.millisToMinutesSeconds()
+)
 
 @Preview
 @Composable

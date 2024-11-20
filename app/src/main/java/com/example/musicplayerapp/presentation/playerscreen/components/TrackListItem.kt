@@ -3,7 +3,6 @@ package com.example.musicplayerapp.presentation.playerscreen.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -38,18 +37,26 @@ fun TrackListItem(track: TrackUIState, onTrackClick: () -> Unit) {
             .background(color = bgColor)
             .clickable(onClick = { onTrackClick() })
     ) {
-        Column(
+        Row(
             modifier = Modifier
-                .padding(vertical = 10.dp, horizontal = 20.dp)
+                .padding(vertical = 10.dp, horizontal = 10.dp)
                 .weight(weight = 1f),
-            verticalArrangement = Arrangement.Center
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = track.trackName,
+                text = "${track.serialNumber}. ${track.trackName}",
                 color = textColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                fontSize = 16.sp
+                fontSize = 18.sp,
+                modifier = Modifier.weight(0.65f)
+            )
+            Text(
+                text = track.duration.toString(),
+                color = textColor,
+                fontSize = 18.sp,
+                modifier = Modifier.weight(0.2f).padding(start = 40.dp)
             )
         }
     }

@@ -31,9 +31,9 @@ class PlaylistManager @Inject constructor(
         playlist.selectByIndex(index)
     }
 
-    fun selectByTrack(track: TrackState): Int? {
-        return playlist.selectByTrack(track)
-    }
+//    fun selectByTrack(track: TrackState): Int? {
+//        return playlist.selectByTrack(track)
+//    }
 
     private fun addTracksToPlayer(newTracks: List<TrackState>) {
         if (newTracks.isNotEmpty()) {
@@ -50,7 +50,7 @@ class PlaylistManager @Inject constructor(
             TrackState(
                 trackName = it.trackName,
                 trackUrl = it.trackUri,
-                duration = getAudioDurationFromSAFUseCase(it.trackUri.toUri())
+                durationInMillis = getAudioDurationFromSAFUseCase(it.trackUri.toUri())
             )
         }
 

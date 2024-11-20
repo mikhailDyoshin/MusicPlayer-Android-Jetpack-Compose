@@ -7,5 +7,6 @@ data class TrackUIState(
     val trackUrl: String = "",
     val trackImage: Int = 0,
     val artistName: String = "",
+    val duration: TrackDuration = TrackDuration(0L),
     var isSelected: Boolean = false,
 )
