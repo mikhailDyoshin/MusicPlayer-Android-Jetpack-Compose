@@ -1,5 +1,6 @@
 package com.example.musicplayerapp.data
 
+import android.util.Log
 import com.example.musicplayerapp.data.contentProvider.AudioContentProvider
 import com.example.musicplayerapp.domain.models.AudioUrisListModel
 import com.example.musicplayerapp.domain.models.TrackModel
@@ -10,14 +11,19 @@ class MusicPlayerRepositoryImpl @Inject constructor(private val contentProvider:
     MusicPlayerRepository {
     override fun getTrackList(audioUrisList: AudioUrisListModel): List<TrackModel> {
 
-        return audioUrisList.urisList.map {uri ->
-            val audioModel = contentProvider.getContent(uri)
-            TrackModel(
-                trackName = audioModel?.name ?: "No name",
-                trackUri = audioModel?.uri.toString()
-            )
-
+        return audioUrisList.urisList.mapNotNull { uri ->
+            contentProvider.getContent(uri)?.let { audioModel ->
+                Log.d(MUSIC_PLAYER_REPOSITORY_TAG, audioModel.toString())
+                TrackModel(
+                    trackName = audioModel.name,
+                    trackUri = audioModel.uri.toString()
+                )
+            }
         }
+    }
+
+    companion object {
+        private const val MUSIC_PLAYER_REPOSITORY_TAG = "MusicPlayerRepositoryImpl"
     }
 
 }

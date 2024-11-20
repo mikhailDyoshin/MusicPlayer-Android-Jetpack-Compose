@@ -8,11 +8,9 @@ import com.example.musicplayerapp.data.storage.models.AudioItemStorageModel
 
 class AudioContentProvider(private val app: Context) {
 
-    private val idProjection = MediaStore.MediaColumns._ID
     private val displayNameProjection = MediaStore.Audio.AudioColumns.DISPLAY_NAME
 
     private val projection = arrayOf(
-        idProjection,
         displayNameProjection
     )
 
@@ -28,18 +26,15 @@ class AudioContentProvider(private val app: Context) {
             selectionArgs,
             sortOrder
         )?.use { cursor ->
-            val idIndex = cursor.getColumnIndex(idProjection)
             val nameIndex = cursor.getColumnIndex(displayNameProjection)
 
             if (cursor.moveToFirst()) {
-                val id = cursor.getLong(idIndex)
                 val fullFileName = cursor.getString(nameIndex)
 
                 val name = Uri.parse(fullFileName).lastPathSegment ?: "No name"
                 Log.d(TAG, "$name -> $fullFileName\n$uri\n")
 
                 AudioItemStorageModel(
-                    id = id,
                     name = name,
                     uri = uri
                 )
